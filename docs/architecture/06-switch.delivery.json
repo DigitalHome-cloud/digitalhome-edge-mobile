@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "50851239-e520-4844-a474-0fca007382ce",
+  "status": "current",
+  "command": "deliver",
+  "type": "sequence",
+  "input": "/home/autretechlab/dhc/digitalhome-edge-mobile/docs/architecture/src/06-switch.sequence.json",
+  "output": "/home/autretechlab/dhc/digitalhome-edge-mobile/docs/architecture/06-switch.html",
+  "specification": {
+    "sha256": "b7029a9f132f2baa8a932f0e74df987962548e53875326b1f76b8fe42bb2a3dc",
+    "bytes": 3794
+  },
+  "artifact": {
+    "sha256": "c0c507a87ee1d640cab2dd7fd81c827cd7654d7f31eb20a1a3db93a1fd7a5214",
+    "bytes": 812057
+  }
+}

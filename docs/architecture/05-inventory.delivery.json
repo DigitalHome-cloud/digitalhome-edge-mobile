@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "34bfba72-5182-4dc5-a068-58ed7466e93e",
+  "status": "current",
+  "command": "deliver",
+  "type": "sequence",
+  "input": "/home/autretechlab/dhc/digitalhome-edge-mobile/docs/architecture/src/05-inventory.sequence.json",
+  "output": "/home/autretechlab/dhc/digitalhome-edge-mobile/docs/architecture/05-inventory.html",
+  "specification": {
+    "sha256": "51c7a8720449887dafca1a1ed6152060c7ae956d96c9c216484ddd87f0b7e87d",
+    "bytes": 4339
+  },
+  "artifact": {
+    "sha256": "75796ca8cdb5146b4f2f52cf98b1febeda679a2cf0f34fe90358805d60dc99c6",
+    "bytes": 814035
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "0c5dd592-ed90-4bae-8d41-8be1c4c1e06c",
+  "status": "current",
+  "command": "deliver",
+  "type": "erd",
+  "input": "/home/autretechlab/dhc/digitalhome-edge-mobile/docs/architecture/src/04-model.erd.json",
+  "output": "/home/autretechlab/dhc/digitalhome-edge-mobile/docs/architecture/04-model.html",
+  "specification": {
+    "sha256": "effa429be513523ace094670eb202cae70717ea1d5590e7eed952d4eba7463c1",
+    "bytes": 7986
+  },
+  "artifact": {
+    "sha256": "da4065f3de1b78f138a9411eada1b19b55ebf3366a4fddd967a30408c04dee86",
+    "bytes": 857440
+  }
+}

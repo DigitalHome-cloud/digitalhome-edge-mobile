@@ -1,0 +1,259 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "digitalhome-edge-mobile: a backend stops reading (fixed in 23b2ca7)",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "output": "07-stuck-backend.html",
+    "repository": {
+      "url": "https://github.com/DigitalHome-cloud/digitalhome-edge-mobile.git",
+      "link_mode": "local-only",
+      "revision": "23b2ca74c3c3534f1645c82d976a48e9ec9a5d00"
+    },
+    "legend": {
+      "entries": {
+        "emphasis": {
+          "label": "the phone's messages"
+        },
+        "security": {
+          "label": "the send timeout"
+        },
+        "dashed": {
+          "label": "events to the backend"
+        }
+      }
+    }
+  },
+  "participants": [
+    {
+      "id": "phone",
+      "type": "frontend",
+      "label": "Phone A",
+      "sublabel": "taps, photos",
+      "sources": [
+        {
+          "path": "web/app.js",
+          "line": 137,
+          "end_line": 144
+        }
+      ]
+    },
+    {
+      "id": "server",
+      "type": "security",
+      "label": "PhoneServer",
+      "sublabel": "deliver, take_over",
+      "sources": [
+        {
+          "path": "dhc_edge/wsserver.py",
+          "line": 265,
+          "end_line": 277
+        },
+        {
+          "path": "dhc_edge/wsserver.py",
+          "line": 446,
+          "end_line": 455
+        }
+      ]
+    },
+    {
+      "id": "core",
+      "type": "backend",
+      "label": "Edge core",
+      "sublabel": "handle → emit",
+      "sources": [
+        {
+          "path": "dhc_edge/core.py",
+          "line": 69,
+          "end_line": 86
+        }
+      ]
+    },
+    {
+      "id": "link",
+      "type": "backend",
+      "label": "Backend Link",
+      "sublabel": "send, SO_SNDTIMEO",
+      "sources": [
+        {
+          "path": "dhc_edge/wsserver.py",
+          "line": 152,
+          "end_line": 185
+        },
+        {
+          "path": "dhc_edge/wsserver.py",
+          "line": 250,
+          "end_line": 255
+        }
+      ]
+    },
+    {
+      "id": "nr",
+      "type": "external",
+      "label": "Node-RED",
+      "sublabel": "its PC left the Wi-Fi",
+      "sources": [
+        {
+          "path": "dhc_edge/wsserver.py",
+          "line": 457,
+          "end_line": 471
+        }
+      ]
+    },
+    {
+      "id": "phone2",
+      "type": "frontend",
+      "label": "Phone B",
+      "sublabel": "comes to take over",
+      "sources": [
+        {
+          "path": "dhc_edge/wsserver.py",
+          "line": 446,
+          "end_line": 450
+        }
+      ]
+    }
+  ],
+  "segments": [
+    {
+      "from": 150,
+      "to": 330,
+      "label": "Under the phone's lock: the write blocks"
+    },
+    {
+      "from": 340,
+      "to": 480,
+      "label": "Before 23b2ca7: everything waits"
+    },
+    {
+      "from": 490,
+      "to": 720,
+      "label": "Since 23b2ca7: dropped after 10 s"
+    }
+  ],
+  "messages": [
+    {
+      "id": "m-tap",
+      "from": "phone",
+      "to": "server",
+      "y": 180,
+      "label": "tile {photo 900 KB}",
+      "variant": "emphasis",
+      "note": "deliver() holds the lock while on_text runs"
+    },
+    {
+      "id": "m-emit",
+      "from": "server",
+      "to": "core",
+      "y": 240,
+      "label": "on_text → handle → emit"
+    },
+    {
+      "id": "m-send",
+      "from": "core",
+      "to": "link",
+      "y": 280,
+      "label": "send_backends(event)",
+      "variant": "dashed"
+    },
+    {
+      "id": "m-write",
+      "from": "link",
+      "to": "nr",
+      "y": 320,
+      "label": "write: the socket is full",
+      "variant": "dashed"
+    },
+    {
+      "id": "m-b",
+      "from": "phone2",
+      "to": "server",
+      "y": 380,
+      "label": "hello: take_over waits",
+      "variant": "emphasis",
+      "note": "measured: no profile for B after 15 s"
+    },
+    {
+      "id": "m-a",
+      "from": "phone",
+      "to": "server",
+      "y": 440,
+      "label": "more taps: not read",
+      "variant": "emphasis",
+      "note": "measured: 4 events of 8, then nothing"
+    },
+    {
+      "id": "m-to",
+      "from": "link",
+      "to": "core",
+      "y": 530,
+      "label": "OSError after 10 s: open = False",
+      "variant": "security",
+      "note": "shut(): the backend's reader ends, it leaves the list"
+    },
+    {
+      "id": "m-free",
+      "from": "core",
+      "to": "server",
+      "y": 610,
+      "label": "emit returns; the lock is free"
+    },
+    {
+      "id": "m-b2",
+      "from": "server",
+      "to": "phone2",
+      "y": 650,
+      "label": "B takes over: web, profile",
+      "variant": "emphasis"
+    },
+    {
+      "id": "m-a2",
+      "from": "server",
+      "to": "phone",
+      "y": 690,
+      "label": "close 4000",
+      "variant": "security"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "server",
+      "from": 175,
+      "to": 620,
+      "type": "security"
+    },
+    {
+      "participant": "link",
+      "from": 275,
+      "to": 540,
+      "type": "backend"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "What happened (before 23b2ca7)",
+      "items": [
+        "Events go to the backends on the phone's thread: deliver() holds PhoneServer.lock while handle() and emit() run (wsserver.py 271–277, core.py 69–86).",
+        "Link.send wrote with no time limit. A backend that is still connected but reads nothing (its PC asleep or gone from the Wi-Fi) fills its socket in a few photos; the next write blocks until TCP gives up, minutes later.",
+        "Meanwhile the phone's later messages are not read, and take_over() waits for the same lock, so no other phone can join (wsserver.py 265–269). Impact: the whole edge stops for a flow that went away."
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Fix and test",
+      "items": [
+        "Link sets SO_SNDTIMEO (SEND_TIMEOUT_S = 10) on its socket: a write without progress for 10 s fails, the link is marked closed and shut, so its reader ends and the backend leaves the list (wsserver.py 152–185). Reads still wait as long as they like.",
+        "tests/test_adapters.py test_a_stuck_backend_is_dropped: a backend that never reads, six photo taps; all seven events are emitted, the stuck backend is gone, and a second phone takes over. Reproduced first with a script: 4 of 8 events, no takeover in 15 s."
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Still true",
+      "items": [
+        "One slow backend still delays the phone by up to 10 s per event while it lasts; a queue per backend would remove that, at the cost of memory for photos. Open, by design for now."
+      ]
+    }
+  ]
+}

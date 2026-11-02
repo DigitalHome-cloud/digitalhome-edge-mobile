@@ -1,0 +1,82 @@
+{
+  "revision": "23b2ca74c3c3534f1645c82d976a48e9ec9a5d00",
+  "diagrams": {
+    "01-overview.architecture.json": {
+      "output": "01-overview.html",
+      "status": "pass",
+      "gates": {
+        "validate": "pass",
+        "deliver": "pass",
+        "check": "pass",
+        "browser-check": "pass"
+      },
+      "diagnostics": []
+    },
+    "02-phone-link.sequence.json": {
+      "output": "02-phone-link.html",
+      "status": "pass",
+      "gates": {
+        "validate": "pass",
+        "deliver": "pass",
+        "check": "pass",
+        "browser-check": "pass"
+      },
+      "diagnostics": []
+    },
+    "03-dataflow.dataflow.json": {
+      "output": "03-dataflow.html",
+      "status": "pass",
+      "gates": {
+        "validate": "pass",
+        "deliver": "pass",
+        "check": "pass",
+        "browser-check": "pass"
+      },
+      "diagnostics": []
+    },
+    "04-model.erd.json": {
+      "output": "04-model.html",
+      "status": "pass",
+      "gates": {
+        "validate": "pass",
+        "deliver": "pass",
+        "check": "pass",
+        "browser-check": "pass"
+      },
+      "diagnostics": []
+    },
+    "05-inventory.sequence.json": {
+      "output": "05-inventory.html",
+      "status": "pass",
+      "gates": {
+        "validate": "pass",
+        "deliver": "pass",
+        "check": "pass",
+        "browser-check": "pass"
+      },
+      "diagnostics": []
+    },
+    "06-switch.sequence.json": {
+      "output": "06-switch.html",
+      "status": "pass",
+      "gates": {
+        "validate": "pass",
+        "deliver": "pass",
+        "check": "pass",
+        "browser-check": "pass"
+      },
+      "diagnostics": []
+    },
+    "07-stuck-backend.sequence.json": {
+      "output": "07-stuck-backend.html",
+      "status": "pass",
+      "gates": {
+        "validate": "pass",
+        "deliver": "pass",
+        "check": "pass",
+        "browser-check": "pass"
+      },
+      "diagnostics": []
+    }
+  }
+}

@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "digitalhome-edge-mobile: events out, commands in",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "output": "03-dataflow.html",
+    "repository": {
+      "url": "https://github.com/DigitalHome-cloud/digitalhome-edge-mobile.git",
+      "link_mode": "local-only",
+      "revision": "23b2ca74c3c3534f1645c82d976a48e9ec9a5d00"
+    },
+    "legend": {
+      "entries": {
+        "default": {"label": "Within the edge"},
+        "emphasis": {"label": "Contract dhc-edge/0.1"},
+        "security": {"label": "Checked, clamped"}
+      }
+    }
+  },
+  "stages": [
+    {"label": "On the phone"},
+    {"label": "Edge: checked"},
+    {"label": "Edge core"},
+    {"label": "Adapters"},
+    {"label": "Backends"}
+  ],
+  "nodes": [
+    {"id": "tiles", "type": "frontend", "label": "Tiles", "sublabel": "send, toggle, choice", "stage": 0, "row": 0,
+     "sources": [{"path": "web/app.js", "line": 67, "end_line": 79}]},
+    {"id": "steps", "type": "frontend", "label": "Steps", "sublabel": "photo, OCR, scan, text", "stage": 0, "row": 1,
+     "sources": [{"path": "web/app.js", "line": 102, "end_line": 115}, {"path": "web/app.js", "line": 137, "end_line": 144}, {"path": "web/actions.js", "line": 138, "end_line": 196}]},
+    {"id": "screen", "type": "frontend", "label": "The screen", "sublabel": "states, toast, ask", "stage": 0, "row": 3,
+     "sources": [{"path": "web/app.js", "line": 173, "end_line": 186}]},
+    {"id": "parse", "type": "security", "label": "parse()", "sublabel": "≤12 parts, ≤2 photos", "stage": 1, "row": 1,
+     "sources": [{"path": "dhc_edge/protocol.py", "line": 105, "end_line": 156}]},
+    {"id": "log", "type": "database", "label": "Recent events", "sublabel": "60, photos of 6", "stage": 2, "row": 0,
+     "sources": [{"path": "dhc_edge/core.py", "line": 28, "end_line": 29}, {"path": "dhc_edge/core.py", "line": 251, "end_line": 254}]},
+    {"id": "emit", "type": "backend", "label": "handle, emit", "sublabel": "tile → event", "stage": 2, "row": 1,
+     "sources": [{"path": "dhc_edge/core.py", "line": 115, "end_line": 136}, {"path": "dhc_edge/core.py", "line": 69, "end_line": 86}]},
+    {"id": "states", "type": "database", "label": "states, labels", "sublabel": "for a phone that returns", "stage": 2, "row": 2,
+     "sources": [{"path": "dhc_edge/core.py", "line": 173, "end_line": 182}, {"path": "dhc_edge/core.py", "line": 148, "end_line": 152}]},
+    {"id": "command", "type": "security", "label": "command()", "sublabel": "protocol.command", "stage": 2, "row": 3,
+     "sources": [{"path": "dhc_edge/core.py", "line": 155, "end_line": 191}, {"path": "dhc_edge/protocol.py", "line": 174, "end_line": 218}]},
+    {"id": "out", "type": "backend", "label": "event(e)", "sublabel": "nodered, mqtt, ros2", "stage": 3, "row": 1,
+     "sources": [{"path": "dhc_edge/adapters/nodered.py", "line": 37, "end_line": 38}, {"path": "dhc_edge/adapters/mqtt.py", "line": 80, "end_line": 86}, {"path": "dhc_edge/adapters/ros2.py", "line": 62, "end_line": 64}]},
+    {"id": "in", "type": "backend", "label": "on command", "sublabel": "error back to sender", "stage": 3, "row": 3,
+     "sources": [{"path": "dhc_edge/adapters/nodered.py", "line": 32, "end_line": 35}, {"path": "dhc_edge/adapters/mqtt.py", "line": 75, "end_line": 78}, {"path": "dhc_edge/adapters/ros2.py", "line": 57, "end_line": 60}]},
+    {"id": "flows", "type": "external", "label": "Flows", "sublabel": "Node-RED, any client", "stage": 4, "row": 2,
+     "sources": [{"path": "node-red/node-red-contrib-dhc-edge/edge-in.js", "line": 21, "end_line": 42}, {"path": "node-red/node-red-contrib-dhc-edge/edge-out.js", "line": 13, "end_line": 31}]}
+  ],
+  "flows": [
+    {"from": "tiles", "to": "parse", "label": "tile {value}", "variant": "default"},
+    {"from": "steps", "to": "parse", "label": "tile {data}", "variant": "default"},
+    {"from": "parse", "to": "emit", "label": "checked dict", "variant": "security"},
+    {"from": "emit", "to": "log", "label": "for setup page", "variant": "default"},
+    {"from": "emit", "to": "out", "label": "event", "variant": "emphasis"},
+    {"from": "out", "to": "flows", "label": "JSON events", "variant": "emphasis"},
+    {"from": "flows", "to": "in", "label": "JSON commands", "variant": "emphasis"},
+    {"from": "in", "to": "command", "label": "raw text", "variant": "default"},
+    {"from": "command", "to": "states", "label": "state, label", "variant": "default"},
+    {"from": "command", "to": "screen", "label": "to_phone JSON", "variant": "security"}
+  ],
+  "cards": [
+    {"dot": "emerald", "title": "Out: from a tap to the backends", "items": [
+      "A single input tile sends data under its own id, steps under each step's id, a toggle the value it asks for; the profile's fixed data comes along (core.py 123–134).",
+      "parse() keeps known fields only: a part is a scalar, {jpeg, w, h, text} or {code, format}; at most 12 parts and 2 photos of 1400 KB base64 (protocol.py 105–156).",
+      "emit() numbers the event, keeps it for the setup page (photos of the last 6, in memory), and hands it to every adapter; one that fails misses it, the others go on (core.py 69–86)."]},
+    {"dot": "cyan", "title": "In: from a backend to the phone", "items": [
+      "Each adapter passes the raw text to command(); a refused command comes back as an error event to that adapter alone (core.py 155–191).",
+      "state is kept with its label, so a phone that comes back gets it in its profile message (core.py 148–152, 173–182). toast, say, ask, vibrate, open and home need a phone: without one, error \"no phone\"."]},
+    {"dot": "rose", "title": "Held back", "items": [
+      "The setup page's log replaces each photo by its size; the photo itself is at /api/photo, this PC only (protocol.py 252–259, wsserver.py 341–356).",
+      "edge-in can hand the photos on as base64, as Buffers or drop them (edge-in.js 9–19)."]}
+  ]
+}

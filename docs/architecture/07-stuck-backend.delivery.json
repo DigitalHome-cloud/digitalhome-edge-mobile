@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "8af24bdf-ea8f-4087-bc51-26325ffff8b0",
+  "status": "current",
+  "command": "deliver",
+  "type": "sequence",
+  "input": "/home/autretechlab/dhc/digitalhome-edge-mobile/docs/architecture/src/07-stuck-backend.sequence.json",
+  "output": "/home/autretechlab/dhc/digitalhome-edge-mobile/docs/architecture/07-stuck-backend.html",
+  "specification": {
+    "sha256": "27146cd3a2e210e93d15fd91c538dd9ee8ed61fae6e100f105c75eed5019bc51",
+    "bytes": 6557
+  },
+  "artifact": {
+    "sha256": "9ca3d354d1685f0c8a3c05e7e40347f0c46ca1ba8c431e3d4c4fb3574b8c7c8e",
+    "bytes": 819713
+  }
+}

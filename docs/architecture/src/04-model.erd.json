@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "diagram_type": "erd",
+  "meta": {
+    "title": "digitalhome-edge-mobile: a profile, and what the edge keeps",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "output": "04-model.html",
+    "repository": {
+      "url": "https://github.com/DigitalHome-cloud/digitalhome-edge-mobile.git",
+      "link_mode": "local-only",
+      "revision": "23b2ca74c3c3534f1645c82d976a48e9ec9a5d00"
+    }
+  },
+  "layout": {"mode": "grid", "gapX": 90, "gapY": 40},
+  "entities": [
+    {"id": "profile", "label": "Profile", "sublabel": "profiles/<id>.json", "tag": "the template (a file)", "row": 0, "col": 0,
+     "attributes": [
+       {"name": "id", "type": "str ≤32 (file name)", "key": "pk"},
+       {"name": "title", "type": "label"},
+       {"name": "style", "type": "tiles | chips"},
+       {"name": "columns", "type": "1–4"},
+       {"name": "lang", "type": "en | fr | de"},
+       {"name": "home", "type": "[tile ids]"},
+       {"name": "extends", "type": "profile id", "key": "fk", "references": "profile.id"},
+       {"name": "drop", "type": "[tile ids]"}
+     ],
+     "sources": [{"path": "dhc_edge/profiles.py", "line": 113, "end_line": 141}, {"path": "dhc_edge/profiles.py", "line": 144, "end_line": 163}, {"path": "dhc_edge/profiles.py", "line": 175, "end_line": 193}]},
+    {"id": "tile", "label": "Tile", "sublabel": "1–24 per profile", "tag": "the template (a file)", "row": 1, "col": 0,
+     "attributes": [
+       {"name": "id", "type": "str ≤32", "key": "pk"},
+       {"name": "profile", "type": "nested in", "key": "fk", "references": "profile.id"},
+       {"name": "label", "type": "label"},
+       {"name": "icon", "type": "emoji"},
+       {"name": "color", "type": "5 colors"},
+       {"name": "speak", "type": "bool"},
+       {"name": "action", "type": "10 actions"},
+       {"name": "data", "type": "{id: scalar}"}
+     ],
+     "sources": [{"path": "dhc_edge/profiles.py", "line": 101, "end_line": 110}, {"path": "dhc_edge/profiles.py", "line": 39, "end_line": 76}, {"path": "dhc_edge/contract.py", "line": 19, "end_line": 29}]},
+    {"id": "step", "label": "Step", "sublabel": "1–8 per steps tile", "tag": "the template (a file)", "row": 2, "col": 0,
+     "attributes": [
+       {"name": "id", "type": "str ≤32", "key": "pk"},
+       {"name": "tile", "type": "nested in", "key": "fk", "references": "tile.id"},
+       {"name": "label", "type": "label"},
+       {"name": "action", "type": "5 input actions"},
+       {"name": "prompt", "type": "label"}
+     ],
+     "sources": [{"path": "dhc_edge/profiles.py", "line": 77, "end_line": 97}]},
+    {"id": "option", "label": "Option", "sublabel": "of a choice", "tag": "the template (a file)", "row": 3, "col": 0,
+     "attributes": [
+       {"name": "id", "type": "str ≤32", "key": "pk"},
+       {"name": "owner", "type": "tile or step", "key": "fk", "references": "step.id"},
+       {"name": "label", "type": "label"},
+       {"name": "icon", "type": "emoji"}
+     ],
+     "sources": [{"path": "dhc_edge/protocol.py", "line": 160, "end_line": 172}]},
+    {"id": "edge", "label": "Edge", "sublabel": "core.py, in memory", "tag": "the edge's memory", "row": 0, "col": 1,
+     "attributes": [
+       {"name": "edge_id", "type": "str ≤32", "key": "pk"},
+       {"name": "profile", "type": "the one shown", "key": "fk", "references": "profile.id"},
+       {"name": "phone", "type": "hello or None", "key": "fk", "references": "phone.id"},
+       {"name": "seq", "type": "int (event n)"},
+       {"name": "lang", "type": "en | fr | de | \"\""},
+       {"name": "web_id", "type": "16 hex"}
+     ],
+     "sources": [{"path": "dhc_edge/core.py", "line": 33, "end_line": 50}]},
+    {"id": "phone", "label": "Phone", "sublabel": "its hello; None when gone", "tag": "the edge's memory", "row": 1, "col": 1,
+     "attributes": [
+       {"name": "id", "type": "16 hex (page storage)", "key": "pk"},
+       {"name": "model", "type": "str ≤40"},
+       {"name": "link", "type": "usb | wifi"},
+       {"name": "secure", "type": "bool"},
+       {"name": "caps", "type": "{name: bool}"}
+     ],
+     "sources": [{"path": "dhc_edge/core.py", "line": 96, "end_line": 122}, {"path": "dhc_edge/protocol.py", "line": 139, "end_line": 146}]},
+    {"id": "state", "label": "TileState", "sublabel": "states, labels", "tag": "the edge's memory", "row": 2, "col": 1,
+     "attributes": [
+       {"name": "tile", "type": "tile id", "key": ["pk", "fk"], "references": "tile.id"},
+       {"name": "value", "type": "scalar"},
+       {"name": "label", "type": "label"}
+     ],
+     "sources": [{"path": "dhc_edge/core.py", "line": 173, "end_line": 182}, {"path": "dhc_edge/core.py", "line": 162, "end_line": 166}]},
+    {"id": "event", "label": "Event", "sublabel": "last 60, setup page", "tag": "the edge's memory", "row": 3, "col": 1,
+     "attributes": [
+       {"name": "n", "type": "int", "key": "pk"},
+       {"name": "t", "type": "7 kinds"},
+       {"name": "profile", "type": "profile id", "key": "fk", "references": "profile.id"},
+       {"name": "tile", "type": "tile id", "key": "fk", "references": "tile.id"},
+       {"name": "data", "type": "{id: part}"},
+       {"name": "ts", "type": "s, ms"}
+     ],
+     "sources": [{"path": "dhc_edge/core.py", "line": 69, "end_line": 80}, {"path": "dhc_edge/protocol.py", "line": 247, "end_line": 259}]},
+    {"id": "photo", "label": "Photo", "sublabel": "of the last 6 events", "tag": "the edge's memory", "row": 4, "col": 1,
+     "attributes": [
+       {"name": "event", "type": "event n", "key": ["pk", "fk"], "references": "event.n"},
+       {"name": "part", "type": "step id", "key": "pk"},
+       {"name": "jpeg", "type": "base64"}
+     ],
+     "sources": [{"path": "dhc_edge/core.py", "line": 75, "end_line": 79}, {"path": "dhc_edge/core.py", "line": 251, "end_line": 254}]}
+  ],
+  "relationships": [
+    {"id": "r-tiles", "from": "profile", "to": "tile", "label": "has", "fromCardinality": "one", "toCardinality": "many", "identifying": true},
+    {"id": "r-steps", "from": "tile", "to": "step", "label": "steps", "fromCardinality": "one", "toCardinality": "many", "toOptional": true, "identifying": true},
+    {"id": "r-options", "from": "step", "to": "option", "label": "choice", "fromCardinality": "one", "toCardinality": "many", "toOptional": true},
+    {"id": "r-shown", "from": "edge", "to": "profile", "label": "shows", "fromCardinality": "many", "toCardinality": "one", "fromOptional": true},
+    {"id": "r-phone", "from": "edge", "to": "phone", "label": "linked", "fromCardinality": "one", "toCardinality": "one", "toOptional": true},
+    {"id": "r-state", "from": "state", "to": "tile", "label": "shown on", "fromCardinality": "one", "fromOptional": true, "toCardinality": "one", "variant": "dashed"},
+    {"id": "r-event", "from": "event", "to": "tile", "label": "used", "fromCardinality": "many", "fromOptional": true, "toCardinality": "one", "variant": "dashed"},
+    {"id": "r-photo", "from": "event", "to": "photo", "label": "keeps", "fromCardinality": "one", "toCardinality": "many", "toOptional": true, "identifying": true}
+  ],
+  "cards": [
+    {"dot": "cyan", "title": "The template", "items": [
+      "A profile is one JSON file; extends merges another's tiles field by field, drop removes some (profiles.py 144–163, 175–193). check() fills the defaults and names the field of an error (profiles.py 113–141).",
+      "Option also belongs to a choice tile directly (a scene, a room); a tiles command patches the shown profile the same way and checks it again (profiles.py 213–217)."]},
+    {"dot": "amber", "title": "The edge's memory", "items": [
+      "Nothing here is written to disk. A profile command empties states and labels (core.py 162–166); the phone's hello is cleared when it goes, states stay for the next one (core.py 138–152).",
+      "Events keep their data with each photo replaced by its size; the JPEGs of the last 6 are kept apart for /api/photo (core.py 69–80, protocol.py 252–259)."]}
+  ]
+}

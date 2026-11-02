@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "digitalhome-edge-mobile: one appliance into the inventory",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "output": "05-inventory.html",
+    "repository": {
+      "url": "https://github.com/DigitalHome-cloud/digitalhome-edge-mobile.git",
+      "link_mode": "local-only",
+      "revision": "23b2ca74c3c3534f1645c82d976a48e9ec9a5d00"
+    },
+    "legend": {
+      "entries": {
+        "emphasis": {"label": "the record's way"},
+        "dashed": {"label": "back to the phone"}
+      }
+    }
+  },
+  "participants": [
+    {"id": "phone", "type": "frontend", "label": "app.html", "sublabel": "the steps, the camera",
+     "sources": [{"path": "profiles/inventory.json", "line": 10, "end_line": 32}, {"path": "web/app.js", "line": 102, "end_line": 144}, {"path": "web/actions.js", "line": 138, "end_line": 196}]},
+    {"id": "core", "type": "backend", "label": "Edge core", "sublabel": "parse, handle, emit",
+     "sources": [{"path": "dhc_edge/protocol.py", "line": 119, "end_line": 153}, {"path": "dhc_edge/core.py", "line": 123, "end_line": 134}]},
+    {"id": "flow", "type": "external", "label": "Node-RED flow", "sublabel": "examples/inventory",
+     "sources": [{"path": "node-red/node-red-contrib-dhc-edge/examples/inventory.json", "line": 13, "end_line": 30}, {"path": "node-red/node-red-contrib-dhc-edge/examples/inventory.json", "line": 69, "end_line": 85}, {"path": "node-red/node-red-contrib-dhc-edge/examples/inventory.json", "line": 107, "end_line": 109}]},
+    {"id": "dhc", "type": "cloud", "label": "DigitalHome.cloud", "sublabel": "$DHC_API/inventory",
+     "sources": [{"path": "node-red/node-red-contrib-dhc-edge/examples/inventory.json", "line": 188, "end_line": 206}]}
+  ],
+  "segments": [
+    {"from": 150, "to": 300, "label": "On the phone: one tile, five screens, one message"},
+    {"from": 310, "to": 470, "label": "The flow makes the record"},
+    {"from": 480, "to": 620, "label": "The phone hears it"}
+  ],
+  "messages": [
+    {"id": "m-tile", "from": "phone", "to": "core", "y": 190, "label": "tile appliance {room, photo, plate, note}", "variant": "emphasis",
+     "note": "the plate's text is read on the phone (Tesseract) and corrected there"},
+    {"id": "m-ev", "from": "core", "to": "flow", "y": 260, "label": "event tile, data + kind", "variant": "emphasis",
+     "note": "parse(): ≤2 photos of 1400 KB; the tile's fixed data added"},
+    {"id": "m-post", "from": "flow", "to": "dhc", "y": 350, "label": "POST record (JSON, base64 photos)", "variant": "emphasis",
+     "note": "no DHC_API: the flow's own mock endpoint answers"},
+    {"id": "m-ok", "from": "dhc", "to": "flow", "y": 420, "label": "2xx {id}", "variant": "return"},
+    {"id": "m-toast", "from": "flow", "to": "core", "y": 510, "label": "toast \"Saved ✓\"; state count", "variant": "dashed",
+     "note": "not 2xx: toast \"Not saved\" and the status"},
+    {"id": "m-phone", "from": "core", "to": "phone", "y": 580, "label": "toast; state {count: n}", "variant": "dashed"}
+  ],
+  "activations": [
+    {"participant": "core", "from": 185, "to": 270, "type": "backend"},
+    {"participant": "flow", "from": 255, "to": 520, "type": "external"}
+  ],
+  "cards": [
+    {"dot": "cyan", "title": "The profile decides the screens", "items": [
+      "inventory.json: New appliance is a steps tile: room (choice), photo, plate (photo with ocr), note (text), then a review card (inventory.json 10–32).",
+      "Each step's screen comes from actions.js; the photo is a JPEG of at most 1280 px whose quality drops until it fits 1400 KB (actions.js 138–196). finish() sends one tile message (app.js 137–144)."]},
+    {"dot": "violet", "title": "The flow", "items": [
+      "edge in (tile events) → which tile → inventory record (room, kind, plate text, note, both photos) → http request to $DHC_API/inventory (examples/inventory.json 13–30, 69–85).",
+      "answer the phone counts in flow context and sends a toast and the count's state through edge out (examples/inventory.json 107–109)."]},
+    {"dot": "amber", "title": "Where the record lives", "items": [
+      "The edge keeps the event in memory only, for the setup page; the record belongs to DigitalHome.cloud. If the POST fails, the person is told, and nothing is retried."]}
+  ]
+}

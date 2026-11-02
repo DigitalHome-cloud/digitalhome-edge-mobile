@@ -226,3 +226,5 @@ __marimo__/
 certs/
 reports/
 node_modules/
+# the architecture pack: per-run browser evidence (receipts/summary.json is kept)
+docs/architecture/receipts/*/

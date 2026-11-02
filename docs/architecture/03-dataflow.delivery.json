@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "7f2a8285-2247-4bcd-b7ad-d7fdde38435f",
+  "status": "current",
+  "command": "deliver",
+  "type": "dataflow",
+  "input": "/home/autretechlab/dhc/digitalhome-edge-mobile/docs/architecture/src/03-dataflow.dataflow.json",
+  "output": "/home/autretechlab/dhc/digitalhome-edge-mobile/docs/architecture/03-dataflow.html",
+  "specification": {
+    "sha256": "3c045ecef24fbd1d8e3435ca5d902901c2705d31a9f30ae59c80b0df71b90eaf",
+    "bytes": 5967
+  },
+  "artifact": {
+    "sha256": "ef66e1397aeaa2407ea33d33035acf862f8493a15f4905ffc05892241484e6d4",
+    "bytes": 823420
+  }
+}

@@ -1,0 +1,148 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<!-- Copyright (C) 2026 DigitalHome.cloud -->
+<!-- The landing page of the phone edge's architecture pack: what each diagram answers, and the review findings. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Phone edge architecture</title>
+<style>
+  :root { --bg: #fafaf7; --panel: #ffffff; --fg: #1d1d1b; --muted: #6b6b66; --line: #e2e2dc; --accent: #0b7fa3;
+          --ok: #1f7a3f; --warn: #9a6700; --bad: #b3261e; --chip: #f0f0ea; --code: #f3f3ee; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --bg: #161615; --panel: #1f1f1d; --fg: #ecece6; --muted: #9a9a93; --line: #33332f;
+          --accent: #3fd8ff; --ok: #5cc47e; --warn: #e0b341; --bad: #f2766d; --chip: #2a2a27; --code: #262624; }
+  }
+  :root[data-theme="dark"] { --bg: #161615; --panel: #1f1f1d; --fg: #ecece6; --muted: #9a9a93; --line: #33332f;
+          --accent: #3fd8ff; --ok: #5cc47e; --warn: #e0b341; --bad: #f2766d; --chip: #2a2a27; --code: #262624; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 980px; margin: 0 auto; padding: 28px 16px 48px; }
+  h1 { font-size: 1.6em; margin: 0 0 6px; }
+  h2 { font-size: 1.15em; margin: 32px 0 10px; }
+  p.lead { color: var(--muted); margin: 0 0 8px; max-width: 46em; }
+  code { font: 13px ui-monospace, Menlo, Consolas, monospace; background: var(--code); border-radius: 5px; padding: 1px 5px; }
+  pre { font: 13px ui-monospace, Menlo, Consolas, monospace; background: var(--code); border-radius: 8px; padding: 10px 12px; overflow-x: auto; }
+  a { color: var(--accent); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; }
+  .card .n { font: 600 12px ui-monospace, Menlo, monospace; color: var(--muted); }
+  .card a { font-weight: 600; text-decoration: none; }
+  .card a:hover { text-decoration: underline; }
+  .card p { margin: 0; color: var(--muted); font-size: 14px; }
+  .kind { align-self: flex-start; background: var(--chip); border-radius: 999px; padding: 1px 9px; font-size: 12px; }
+  table { border-collapse: collapse; width: 100%; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+  td, th { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; font-size: 14px; }
+  th { color: var(--muted); font-weight: 500; font-size: 13px; }
+  tr:last-child td { border-bottom: 0; }
+  .tag { font-size: 12px; font-weight: 600; white-space: nowrap; }
+  .tag.ok { color: var(--ok); } .tag.warn { color: var(--warn); } .tag.bad { color: var(--bad); }
+  .wrap { overflow-x: auto; }
+  footer { color: var(--muted); font-size: 13px; margin-top: 36px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>The phone edge, drawn from its code</h1>
+  <p class="lead">A phone becomes the edge of DigitalHome.cloud: a big-tile page (a <em>profile</em>: inventory, check-in/out,
+    a wall switch) that joins a small Python server over USB or by a QR code on the Wi-Fi. The edge checks what the phone
+    sends and passes it, as one JSON contract (<code>dhc-edge/0.1</code>), to Node-RED, an MQTT broker or ROS 2, whose
+    commands come back to the phone's tiles. These seven diagrams show the parts, how a phone joins, what flows, what is
+    kept, two use cases end to end, and the one failure that stopped the whole edge.</p>
+  <p class="lead">Every box cites the lines it comes from, at commit <code>23b2ca7</code>; the build checked each citation
+    against that commit. The edge serves this pack at <code>/docs/</code>.</p>
+
+  <h2>Read in this order</h2>
+  <div class="grid">
+    <div class="card"><span class="n">01</span><a href="01-overview.html">The phone, the edge and its backends</a>
+      <span class="kind">architecture</span>
+      <p>Where each part runs: the phone's two ways in, the two gates, the core, the three adapters, and Node-RED in
+        front of DigitalHome.cloud.</p></div>
+    <div class="card"><span class="n">02</span><a href="02-phone-link.html">A phone joins, by USB or by QR</a>
+      <span class="kind">sequence</span>
+      <p>adb reverse or https with the edge's own authority; the gate, the takeover, then hello, the pages' fingerprint
+        and the profile.</p></div>
+    <div class="card"><span class="n">03</span><a href="03-dataflow.html">Events out, commands in</a>
+      <span class="kind">data flow</span>
+      <p>A tap or a finished set of steps, checked, numbered and handed to every adapter; a command, checked, kept as a
+        state or passed to the screen.</p></div>
+    <div class="card"><span class="n">04</span><a href="04-model.html">A profile, and what the edge keeps</a>
+      <span class="kind">data model</span>
+      <p>The template (profile, tile, step, option) and the edge's memory: phone, states, recent events, photos.
+        Nothing on disk.</p></div>
+    <div class="card"><span class="n">05</span><a href="05-inventory.html">One appliance into the inventory</a>
+      <span class="kind">sequence</span>
+      <p>Room, photo, type plate read on the phone, note: one event, a Node-RED record POSTed to DigitalHome.cloud, a
+        toast and a count back.</p></div>
+    <div class="card"><span class="n">06</span><a href="06-switch.html">A wall switch whose tiles follow the home</a>
+      <span class="kind">sequence</span>
+      <p>A toggle asks, the home decides; states that change by themselves; a phone that comes back sees the home at
+        once.</p></div>
+    <div class="card"><span class="n">07</span><a href="07-stuck-backend.html">A backend stops reading</a>
+      <span class="kind">sequence · failure</span>
+      <p>Before 23b2ca7 one Node-RED that went away froze the phone and kept every other phone out; now it is dropped
+        after 10 s.</p></div>
+  </div>
+
+  <h2>Review findings</h2>
+  <div class="wrap">
+  <table>
+    <tr><th>Finding</th><th>Evidence</th><th>Status</th></tr>
+    <tr><td>A backend that stayed connected but stopped reading (its PC asleep, or gone from the Wi-Fi) froze the edge.
+      Events are sent on the phone's thread while <code>deliver()</code> holds the phone's lock, and a write had no time
+      limit: after a few photos the socket was full, the phone's later taps were not read and <code>take_over()</code>
+      waited for the same lock. Measured: 4 events of 8, then nothing; a second phone got no profile in 15 s. Writes now
+      give up after <code>SEND_TIMEOUT_S</code> (10 s) without progress and the link is shut; a test reproduces it.</td>
+      <td><code>wsserver.py</code> 152–185, 265–277, <code>core.py</code> 69–86 · <a href="07-stuck-backend.html">07</a></td>
+      <td><span class="tag ok">fixed in 23b2ca7</span></td></tr>
+    <tr><td>While a backend is slow (not stuck), each event still waits for it, up to 10 s, on the phone's thread. A queue
+      and a sender thread per backend would take it off the phone's path, at the cost of keeping photos in memory per
+      backend.</td>
+      <td><code>wsserver.py</code> 250–255, <code>core.py</code> 81–86 · <a href="07-stuck-backend.html">07</a></td>
+      <td><span class="tag warn">open</span></td></tr>
+    <tr><td>A backend joins the list before it gets its <code>status</code> event, so an event emitted in between can
+      reach it first. The adapter's doc says the status comes first. A flow that waits for the status only to read the
+      states is unaffected. <em>Read, not reproduced.</em></td>
+      <td><code>wsserver.py</code> 457–467, <code>nodered.py</code> 28–30</td>
+      <td><span class="tag warn">open</span></td></tr>
+    <tr><td>Events are numbered under the core's lock but handed to the adapters after it, so an event from the phone's
+      thread and one from a backend's (a <code>profile</code> event) can arrive in the other order than their
+      <code>n</code>. Sort by <code>n</code> where the order matters. <em>Read, not reproduced.</em></td>
+      <td><code>core.py</code> 69–86, 162–168</td>
+      <td><span class="tag warn">open</span></td></tr>
+    <tr><td>MQTT and ROS 2 commands carry no token: whoever may publish on the broker or the ROS domain can drive the
+      phone (toast, say, profile). The edge relies on the broker's own users and TLS (<code>--mqtt-user</code>,
+      <code>--mqtt-tls</code>) and on the ROS domain; the Node-RED link has its token, and without one only this PC may
+      connect.</td>
+      <td><code>mqtt.py</code> 34–38, 75–78, <code>ros2.py</code> 57–60, <code>wsserver.py</code> 359–367 · <a href="01-overview.html">01</a></td>
+      <td><span class="tag ok">by design</span></td></tr>
+    <tr><td>Photos stay in memory, those of the last 6 events, for the setup page only (<code>/api/photo</code>, this PC
+      only); the events listed there carry each photo's size, not the photo. The record and its photos belong to the
+      backend.</td>
+      <td><code>core.py</code> 69–80, 251–254, <code>wsserver.py</code> 341–356 · <a href="04-model.html">04</a></td>
+      <td><span class="tag ok">by design</span></td></tr>
+    <tr><td>A toggle never turns by itself: it sends the state it asks for and shows it only when a <code>state</code>
+      command comes back, else it falls back after 4 s. Without a backend a switch does nothing, visibly.</td>
+      <td><code>app.js</code> 74–77, 176–179 · <a href="06-switch.html">06</a></td>
+      <td><span class="tag ok">by design</span></td></tr>
+    <tr><td>Suspected: a second phone could be credited with a message the first had already sent. It cannot:
+      <code>deliver()</code> passes a frame on only while its link is current, under the lock the takeover holds
+      (atl-phone's fix, kept).</td>
+      <td><code>wsserver.py</code> 265–277 · <a href="02-phone-link.html">02</a></td>
+      <td><span class="tag ok">checked · no issue</span></td></tr>
+  </table>
+  </div>
+
+  <h2>Rebuild</h2>
+  <pre>cd docs/architecture
+python3 build.py            # every diagram; python3 build.py 05- for one
+</pre>
+  <p class="lead">The sources are <code>src/*.json</code>; <code>receipts/</code> keeps each run's validation, browser
+    check and a <code>summary.json</code>. After a code change: commit it, update the cited lines and
+    <code>meta.repository.revision</code> in the JSON and here, then rebuild.</p>
+
+  <footer>GPL-3.0-or-later · DigitalHome.cloud · generated with Archify from commit 23b2ca7</footer>
+</main>
+</body>
+</html>

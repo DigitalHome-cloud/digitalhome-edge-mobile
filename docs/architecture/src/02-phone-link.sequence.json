@@ -1,0 +1,259 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "digitalhome-edge-mobile: a phone joins, by USB or by QR",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "output": "02-phone-link.html",
+    "repository": {
+      "url": "https://github.com/DigitalHome-cloud/digitalhome-edge-mobile.git",
+      "link_mode": "local-only",
+      "revision": "23b2ca74c3c3534f1645c82d976a48e9ec9a5d00"
+    },
+    "legend": {
+      "entries": {
+        "emphasis": {
+          "label": "the phone's link"
+        },
+        "security": {
+          "label": "a gate"
+        },
+        "dashed": {
+          "label": "to the backends"
+        }
+      }
+    }
+  },
+  "participants": [
+    {
+      "id": "setup",
+      "type": "frontend",
+      "label": "setup.html",
+      "sublabel": "on the edge's PC",
+      "sources": [
+        {
+          "path": "web/setup.js",
+          "line": 98,
+          "end_line": 118
+        }
+      ]
+    },
+    {
+      "id": "adb",
+      "type": "external",
+      "label": "usb.sh, adb",
+      "sublabel": "PC, USB cable",
+      "sources": [
+        {
+          "path": "scripts/usb.sh",
+          "line": 10,
+          "end_line": 17
+        }
+      ]
+    },
+    {
+      "id": "phone",
+      "type": "frontend",
+      "label": "app.html",
+      "sublabel": "Chrome on the phone",
+      "sources": [
+        {
+          "path": "web/app.js",
+          "line": 206,
+          "end_line": 229
+        }
+      ]
+    },
+    {
+      "id": "gate",
+      "type": "security",
+      "label": "/ws",
+      "sublabel": "Origin, key, takeover",
+      "sources": [
+        {
+          "path": "dhc_edge/wsserver.py",
+          "line": 368,
+          "end_line": 373
+        },
+        {
+          "path": "dhc_edge/wsserver.py",
+          "line": 265,
+          "end_line": 277
+        },
+        {
+          "path": "dhc_edge/wsserver.py",
+          "line": 446,
+          "end_line": 455
+        }
+      ]
+    },
+    {
+      "id": "core",
+      "type": "backend",
+      "label": "Edge core",
+      "sublabel": "opened, handle",
+      "sources": [
+        {
+          "path": "dhc_edge/core.py",
+          "line": 103,
+          "end_line": 122
+        },
+        {
+          "path": "dhc_edge/core.py",
+          "line": 148,
+          "end_line": 152
+        }
+      ]
+    },
+    {
+      "id": "nr",
+      "type": "external",
+      "label": "Backends",
+      "sublabel": "Node-RED, MQTT, ROS 2",
+      "sources": [
+        {
+          "path": "dhc_edge/adapters/nodered.py",
+          "line": 28,
+          "end_line": 38
+        }
+      ]
+    }
+  ],
+  "segments": [
+    {
+      "from": 150,
+      "to": 290,
+      "label": "USB: the PC's port is the phone's localhost"
+    },
+    {
+      "from": 300,
+      "to": 500,
+      "label": "Wi-Fi: https with the edge's own authority"
+    },
+    {
+      "from": 510,
+      "to": 800,
+      "label": "Either way: hello, then the tiles"
+    }
+  ],
+  "messages": [
+    {
+      "id": "m-rev",
+      "from": "adb",
+      "to": "phone",
+      "y": 180,
+      "label": "adb reverse; open localhost:8790",
+      "variant": "emphasis",
+      "note": "localhost is a secure page: camera, no certificate"
+    },
+    {
+      "id": "m-usb",
+      "from": "phone",
+      "to": "gate",
+      "y": 240,
+      "label": "ws://localhost/ws",
+      "variant": "emphasis",
+      "note": "from 127.0.0.1: the link is \"usb\""
+    },
+    {
+      "id": "m-qr",
+      "from": "setup",
+      "to": "phone",
+      "y": 330,
+      "label": "QR codes: ca.crt, then the page",
+      "note": "the phone installs the authority once"
+    },
+    {
+      "id": "m-wss",
+      "from": "phone",
+      "to": "gate",
+      "y": 390,
+      "label": "wss://<pc>:8790/ws?key",
+      "variant": "emphasis",
+      "note": "TLS handshake in its own thread, 10 s at most"
+    },
+    {
+      "id": "m-101",
+      "from": "gate",
+      "to": "core",
+      "y": 450,
+      "label": "101; take_over, opened",
+      "variant": "security",
+      "note": "foreign Origin or wrong key: 403. An old phone: closed, 4000"
+    },
+    {
+      "id": "m-hello",
+      "from": "phone",
+      "to": "core",
+      "y": 540,
+      "label": "hello {id, model, caps}",
+      "variant": "emphasis",
+      "note": "parse(): known fields only, clamped"
+    },
+    {
+      "id": "m-web",
+      "from": "core",
+      "to": "phone",
+      "y": 600,
+      "label": "web {fingerprint}",
+      "note": "a page from an older edge reloads itself"
+    },
+    {
+      "id": "m-prof",
+      "from": "core",
+      "to": "phone",
+      "y": 680,
+      "label": "profile {tiles, states, labels}"
+    },
+    {
+      "id": "m-ev",
+      "from": "core",
+      "to": "nr",
+      "y": 740,
+      "label": "event hello {phone, link}",
+      "variant": "dashed",
+      "note": "every adapter; mqtt also renews its retained status"
+    }
+  ],
+  "activations": [
+    {
+      "participant": "gate",
+      "from": 385,
+      "to": 460,
+      "type": "security"
+    },
+    {
+      "participant": "core",
+      "from": 535,
+      "to": 750,
+      "type": "backend"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "USB",
+      "items": [
+        "scripts/usb.sh: adb reverse tcp:8790 tcp:8790, then opens the page on the phone; with a certificate the edge speaks https there too (usb.sh 10–17).",
+        "opened() calls a link from a loopback address \"usb\", any other \"wifi\"; the hello event says which (core.py 103–105)."
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "Wi-Fi by QR",
+      "items": [
+        "./start.sh --make-cert makes certs/: an authority (its key never leaves the PC) and the edge's certificate for this PC's addresses (make_cert.sh 5–13, start.sh 118–123).",
+        "The setup page draws the QR of /ca.crt and of the page (setup.js 116–118). /ws then needs the same Origin and, with --key, the key (wsserver.py 368–373)."
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "One phone",
+      "items": [
+        "take_over() waits for a message being delivered, swaps the link, closes the old one with 4000; app.html does not reconnect after 4000 (wsserver.py 265–277, app.js 217–220).",
+        "Before 23b2ca7 a backend that stopped reading kept that lock: diagram 07."
+      ]
+    }
+  ]
+}

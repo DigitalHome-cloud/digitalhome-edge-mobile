@@ -6,3 +6,4 @@ reports
 node-red
 tests
 **/__pycache__
+docs/architecture/receipts

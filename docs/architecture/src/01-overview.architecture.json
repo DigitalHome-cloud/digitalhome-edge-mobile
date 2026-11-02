@@ -1,0 +1,507 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "digitalhome-edge-mobile: the phone, the edge and its backends",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "output": "01-overview.html",
+    "repository": {
+      "url": "https://github.com/DigitalHome-cloud/digitalhome-edge-mobile.git",
+      "link_mode": "local-only",
+      "revision": "23b2ca74c3c3534f1645c82d976a48e9ec9a5d00"
+    },
+    "legend": {
+      "entries": {
+        "frontend": {
+          "label": "Page in a browser"
+        },
+        "backend": {
+          "label": "Edge code (Python)"
+        },
+        "security": {
+          "label": "Gate (who may connect)"
+        },
+        "database": {
+          "label": "Files the edge reads"
+        },
+        "messagebus": {
+          "label": "Broker or topics"
+        },
+        "external": {
+          "label": "Outside this repo"
+        }
+      }
+    }
+  },
+  "components": [
+    {
+      "id": "phone",
+      "type": "frontend",
+      "label": "app.html",
+      "sublabel": "tiles, on the phone",
+      "pos": [
+        40,
+        200
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "sources": [
+        {
+          "path": "web/app.js",
+          "line": 67,
+          "end_line": 79
+        },
+        {
+          "path": "web/app.js",
+          "line": 213,
+          "end_line": 223
+        }
+      ]
+    },
+    {
+      "id": "adb",
+      "type": "external",
+      "label": "adb reverse",
+      "sublabel": "USB: phone's localhost",
+      "pos": [
+        40,
+        380
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "sources": [
+        {
+          "path": "scripts/usb.sh",
+          "line": 10,
+          "end_line": 17
+        }
+      ]
+    },
+    {
+      "id": "ws",
+      "type": "security",
+      "label": "/ws",
+      "sublabel": "Origin, key, one phone",
+      "pos": [
+        270,
+        200
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "sources": [
+        {
+          "path": "dhc_edge/wsserver.py",
+          "line": 368,
+          "end_line": 373
+        },
+        {
+          "path": "dhc_edge/wsserver.py",
+          "line": 446,
+          "end_line": 455
+        }
+      ]
+    },
+    {
+      "id": "core",
+      "type": "backend",
+      "label": "Edge core",
+      "sublabel": "parse, states, emit",
+      "pos": [
+        500,
+        182
+      ],
+      "size": [
+        150,
+        100
+      ],
+      "sources": [
+        {
+          "path": "dhc_edge/core.py",
+          "line": 69,
+          "end_line": 86
+        },
+        {
+          "path": "dhc_edge/core.py",
+          "line": 115,
+          "end_line": 136
+        },
+        {
+          "path": "dhc_edge/core.py",
+          "line": 155,
+          "end_line": 191
+        }
+      ]
+    },
+    {
+      "id": "profiles",
+      "type": "database",
+      "label": "profiles/*.json",
+      "sublabel": "the tile templates",
+      "pos": [
+        500,
+        40
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "sources": [
+        {
+          "path": "dhc_edge/profiles.py",
+          "line": 175,
+          "end_line": 199
+        },
+        {
+          "path": "profiles/inventory.json",
+          "line": 9,
+          "end_line": 32
+        }
+      ]
+    },
+    {
+      "id": "setup",
+      "type": "frontend",
+      "label": "setup.html",
+      "sublabel": "test console, this PC",
+      "pos": [
+        500,
+        540
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "sources": [
+        {
+          "path": "web/setup.js",
+          "line": 94,
+          "end_line": 102
+        },
+        {
+          "path": "dhc_edge/core.py",
+          "line": 212,
+          "end_line": 229
+        }
+      ]
+    },
+    {
+      "id": "nodered",
+      "type": "security",
+      "label": "/ws/backend",
+      "sublabel": "nodered adapter, token",
+      "pos": [
+        760,
+        40
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "sources": [
+        {
+          "path": "dhc_edge/wsserver.py",
+          "line": 359,
+          "end_line": 367
+        },
+        {
+          "path": "dhc_edge/adapters/nodered.py",
+          "line": 22,
+          "end_line": 38
+        }
+      ]
+    },
+    {
+      "id": "mqtt",
+      "type": "backend",
+      "label": "mqtt adapter",
+      "sublabel": "paho, retained status",
+      "pos": [
+        760,
+        200
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "sources": [
+        {
+          "path": "dhc_edge/adapters/mqtt.py",
+          "line": 39,
+          "end_line": 40
+        },
+        {
+          "path": "dhc_edge/adapters/mqtt.py",
+          "line": 61,
+          "end_line": 86
+        }
+      ]
+    },
+    {
+      "id": "ros2",
+      "type": "backend",
+      "label": "ros2 adapter",
+      "sublabel": "rclpy, String JSON",
+      "pos": [
+        760,
+        380
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "sources": [
+        {
+          "path": "dhc_edge/adapters/ros2.py",
+          "line": 36,
+          "end_line": 64
+        }
+      ]
+    },
+    {
+      "id": "nr",
+      "type": "external",
+      "label": "Node-RED",
+      "sublabel": "dhc edge in / out",
+      "pos": [
+        1010,
+        40
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "sources": [
+        {
+          "path": "node-red/node-red-contrib-dhc-edge/edge-config.js",
+          "line": 26,
+          "end_line": 54
+        },
+        {
+          "path": "node-red/node-red-contrib-dhc-edge/edge-out.js",
+          "line": 41,
+          "end_line": 46
+        }
+      ]
+    },
+    {
+      "id": "broker",
+      "type": "messagebus",
+      "label": "MQTT broker",
+      "sublabel": "dhc/edge/<id>/…",
+      "pos": [
+        1010,
+        200
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "sources": [
+        {
+          "path": "dhc_edge/contract.py",
+          "line": 32,
+          "end_line": 34
+        },
+        {
+          "path": "start.sh",
+          "line": 69,
+          "end_line": 78
+        }
+      ]
+    },
+    {
+      "id": "robots",
+      "type": "messagebus",
+      "label": "ROS 2 topics",
+      "sublabel": "/dhc_edge/<id>/…",
+      "pos": [
+        1010,
+        380
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "sources": [
+        {
+          "path": "dhc_edge/contract.py",
+          "line": 37,
+          "end_line": 39
+        },
+        {
+          "path": "start.sh",
+          "line": 124,
+          "end_line": 127
+        }
+      ]
+    },
+    {
+      "id": "dhc",
+      "type": "cloud",
+      "label": "DigitalHome.cloud",
+      "sublabel": "its API (DHC_API)",
+      "pos": [
+        1240,
+        40
+      ],
+      "size": [
+        150,
+        64
+      ],
+      "sources": [
+        {
+          "path": "node-red/node-red-contrib-dhc-edge/examples/inventory.json",
+          "line": 70,
+          "end_line": 71
+        }
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "The phone",
+      "wraps": [
+        "phone"
+      ]
+    },
+    {
+      "kind": "security-group",
+      "label": "The edge (Docker or venv, --net=host)",
+      "wraps": [
+        "ws",
+        "core",
+        "profiles",
+        "nodered",
+        "mqtt",
+        "ros2"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "wifi",
+      "from": "phone",
+      "to": "ws",
+      "label": "Wi-Fi: wss (QR)",
+      "variant": "emphasis"
+    },
+    {
+      "id": "usb",
+      "from": "phone",
+      "to": "adb",
+      "label": "USB"
+    },
+    {
+      "id": "usb2",
+      "from": "adb",
+      "to": "ws",
+      "label": "ws :8790"
+    },
+    {
+      "id": "checked",
+      "from": "ws",
+      "to": "core",
+      "label": "checked JSON",
+      "variant": "emphasis"
+    },
+    {
+      "id": "load",
+      "from": "profiles",
+      "to": "core",
+      "label": "load, check"
+    },
+    {
+      "id": "api",
+      "from": "setup",
+      "to": "core",
+      "label": "/api (loopback)",
+      "variant": "security"
+    },
+    {
+      "id": "e-nr",
+      "from": "core",
+      "to": "nodered",
+      "label": "events",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "e-mq",
+      "from": "core",
+      "to": "mqtt",
+      "label": "events",
+      "variant": "emphasis",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "e-ros",
+      "from": "core",
+      "to": "ros2",
+      "label": "events",
+      "fromSide": "right",
+      "toSide": "left"
+    },
+    {
+      "id": "nr-link",
+      "from": "nr",
+      "to": "nodered",
+      "label": "WebSocket"
+    },
+    {
+      "id": "mq-link",
+      "from": "mqtt",
+      "to": "broker",
+      "label": "pub / sub"
+    },
+    {
+      "id": "ros-link",
+      "from": "ros2",
+      "to": "robots",
+      "label": "pub / sub"
+    },
+    {
+      "id": "nr-dhc",
+      "from": "nr",
+      "to": "dhc",
+      "label": "HTTP",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "The phone's two ways in",
+      "items": [
+        "USB: scripts/usb.sh runs adb reverse, so the phone opens http://localhost:8790, a secure page for the camera without a certificate (usb.sh 10–17).",
+        "Wi-Fi: ./start.sh --make-cert gives the edge its own authority; the setup page shows a QR code for it and one for the page, and the phone installs the authority once (setup.js 116–118, make_cert.sh 5–13).",
+        "/ws refuses a foreign Origin and a wrong key; a new phone takes over and the old one is closed with 4000 (wsserver.py 368–373, 265–269)."
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "One contract, three transports",
+      "items": [
+        "The core hands every event to each adapter that is on and takes commands from any (core.py 69–86, 155–191); --adapter picks them (adapters/__init__.py 49–60).",
+        "nodered: /ws/backend on the edge's own port, with the token from .edge/token; without a token only this PC (wsserver.py 359–367).",
+        "mqtt: dhc/edge/<id>/event/<t>, /command, a retained /status with an offline last will (mqtt.py 39–40, 61–86). ros2: two std_msgs/String topics with the same JSON (ros2.py 36–64)."
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Kept on the edge, and not",
+      "items": [
+        "The edge keeps the profile shown, the tiles' states and labels, the last 60 events and the photos of the last 6, in memory only (core.py 28–29, 69–80).",
+        "Nothing is written but the phone checks' reports (registry); records go to the backend, which owns them (examples/inventory.json 70–71)."
+      ]
+    }
+  ]
+}

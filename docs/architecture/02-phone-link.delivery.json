@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "receiptId": "81bd7372-80ac-4366-a499-2cfb9e2f2200",
+  "status": "current",
+  "command": "deliver",
+  "type": "sequence",
+  "input": "/home/autretechlab/dhc/digitalhome-edge-mobile/docs/architecture/src/02-phone-link.sequence.json",
+  "output": "/home/autretechlab/dhc/digitalhome-edge-mobile/docs/architecture/02-phone-link.html",
+  "specification": {
+    "sha256": "8848745acbbb808a676a88a2eaf83f1c6cc8f0d457cdf9857b74276d594c63af",
+    "bytes": 6264
+  },
+  "artifact": {
+    "sha256": "14acd3758723b1d541fe2abb496cfd438c5be5c40fc0b5d0146bdcdfa7cd9932",
+    "bytes": 819548
+  }
+}

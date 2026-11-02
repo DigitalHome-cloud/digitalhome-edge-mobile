@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "digitalhome-edge-mobile: a wall switch whose tiles follow the home",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "output": "06-switch.html",
+    "repository": {
+      "url": "https://github.com/DigitalHome-cloud/digitalhome-edge-mobile.git",
+      "link_mode": "local-only",
+      "revision": "23b2ca74c3c3534f1645c82d976a48e9ec9a5d00"
+    },
+    "legend": {
+      "entries": {
+        "emphasis": {"label": "a tap, asked"},
+        "dashed": {"label": "the home's answer"}
+      }
+    }
+  },
+  "participants": [
+    {"id": "phone", "type": "frontend", "label": "app.html", "sublabel": "profile switch",
+     "sources": [{"path": "profiles/switch.json", "line": 10, "end_line": 28}, {"path": "web/app.js", "line": 74, "end_line": 77}, {"path": "web/app.js", "line": 176, "end_line": 179}]},
+    {"id": "core", "type": "backend", "label": "Edge core", "sublabel": "keeps states, labels",
+     "sources": [{"path": "dhc_edge/core.py", "line": 173, "end_line": 182}, {"path": "dhc_edge/core.py", "line": 148, "end_line": 152}]},
+    {"id": "flow", "type": "external", "label": "Node-RED flow", "sublabel": "examples/switch",
+     "sources": [{"path": "node-red/node-red-contrib-dhc-edge/examples/switch.json", "line": 29, "end_line": 31}, {"path": "node-red/node-red-contrib-dhc-edge/examples/switch.json", "line": 69, "end_line": 101}]}
+  ],
+  "segments": [
+    {"from": 150, "to": 330, "label": "A tap asks; the home decides"},
+    {"from": 340, "to": 450, "label": "The home changes by itself"},
+    {"from": 460, "to": 600, "label": "The phone comes back"}
+  ],
+  "messages": [
+    {"id": "m-tap", "from": "phone", "to": "core", "y": 190, "label": "tile ceiling {value: true}", "variant": "emphasis",
+     "note": "the tile waits (4 s at most) for its state"},
+    {"id": "m-ev", "from": "core", "to": "flow", "y": 250, "label": "event tile ceiling, value true", "variant": "emphasis"},
+    {"id": "m-st", "from": "flow", "to": "core", "y": 290, "label": "state {ceiling, lamp, scene}", "variant": "dashed",
+     "note": "kept by the edge, then sent"},
+    {"id": "m-ph", "from": "core", "to": "phone", "y": 320, "label": "state: the tile turns on", "variant": "dashed"},
+    {"id": "m-temp", "from": "flow", "to": "core", "y": 390, "label": "state temp 21.3 (every 30 s)", "variant": "dashed"},
+    {"id": "m-ph2", "from": "core", "to": "phone", "y": 430, "label": "state temp", "variant": "dashed"},
+    {"id": "m-hello", "from": "phone", "to": "core", "y": 500, "label": "hello (after a reload)", "variant": "emphasis"},
+    {"id": "m-prof", "from": "core", "to": "phone", "y": 550, "label": "profile with states, labels", "variant": "dashed",
+     "note": "the tiles show the home at once, before Node-RED says anything"}
+  ],
+  "activations": [
+    {"participant": "core", "from": 185, "to": 330, "type": "backend"},
+    {"participant": "core", "from": 495, "to": 560, "type": "backend"}
+  ],
+  "cards": [
+    {"dot": "cyan", "title": "The backend decides", "items": [
+      "A toggle sends the state it asks for and waits; only a state command turns it (app.js 74–77, 176–179). A lamp that does not switch stays off on the screen.",
+      "the home keeps the lights and the scene in flow context; a scene or all off changes several tiles in one state command (examples/switch.json 29–31)."]},
+    {"dot": "amber", "title": "Kept for the next phone", "items": [
+      "command() keeps each state and its label before sending it (core.py 173–182); send_profile() hands them to every phone that says hello (core.py 148–152). A profile command empties them (core.py 162–166).",
+      "Node-RED also gets a status event with the states when it connects (nodered.py 28–30)."]}
+  ]
+}
