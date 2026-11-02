@@ -54,6 +54,44 @@ def test_nodered_adapter():
         e.stop()
 
 
+def test_a_stuck_backend_is_dropped(monkeypatch):
+    """A backend that stops reading (Node-RED's PC gone from the Wi-Fi) must not stall the phone: before the send
+    timeout, events were sent on the phone's thread under its lock, so its taps and a takeover waited forever."""
+    import base64
+    import os
+    from dhc_edge import wsserver
+    monkeypatch.setattr(wsserver, "SEND_TIMEOUT_S", 1)
+    e = Edge(ROOT / "web", ROOT / "profiles", profile="inventory", port=0, bind="127.0.0.1", token="tk")
+    e.start(adapters.load(["nodered"], e, Namespace()))
+    try:
+        stuck = socket.create_connection(("127.0.0.1", e.server.port))
+        stuck.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 4096)
+        stuck.sendall((f"GET /ws/backend?token=tk HTTP/1.1\r\nHost: 127.0.0.1\r\nUpgrade: websocket\r\n"
+                       f"Connection: Upgrade\r\nSec-WebSocket-Key: {base64.b64encode(os.urandom(16)).decode()}\r\n"
+                       "Sec-WebSocket-Version: 13\r\n\r\n").encode())   # and never reads again
+        deadline = time.monotonic() + 3
+        while e.server.backend_count < 1 and time.monotonic() < deadline:
+            time.sleep(0.05)
+        ph = MockPhone(f"ws://127.0.0.1:{e.server.port}/ws")
+        ph.hello()
+        ph.expect("profile")
+        jpeg = base64.b64encode(b"\xff\xd8\xff\xe0" + os.urandom(900_000)).decode()
+        for _ in range(6):
+            ph.tap("plate_only", plate_only={"jpeg": jpeg, "w": 1280, "h": 960})
+        deadline = time.monotonic() + 15
+        while e.seq < 7 and time.monotonic() < deadline:   # hello + 6 tiles
+            time.sleep(0.1)
+        assert e.seq == 7 and e.server.backend_count == 0
+        ph2 = MockPhone(f"ws://127.0.0.1:{e.server.port}/ws")
+        ph2.hello()
+        ph2.expect("profile")
+        stuck.close()
+        ph.close()
+        ph2.close()
+    finally:
+        e.stop()
+
+
 @pytest.fixture
 def broker(tmp_path):
     pytest.importorskip("paho.mqtt")

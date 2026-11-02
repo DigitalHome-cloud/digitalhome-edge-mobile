@@ -18,7 +18,8 @@ GET /ca.crt    -> this PC's certificate authority, for a phone to install once (
 GET /docs/     -> the architecture pack (docs/architecture), when the edge has it
 
 One phone at a time: a new phone takes over and the old one is closed; a frame the old one had already sent is dropped.
-Backends: up to MAX_BACKENDS, beside the phone.
+Backends: up to MAX_BACKENDS, beside the phone. A link that stops reading is dropped after SEND_TIMEOUT_S (events
+are sent on the phone's thread, while it holds the phone's lock).
 A browser on another site is refused (Origin must match Host).
 """
 import base64
@@ -42,6 +43,7 @@ MAX_BACKENDS = 8
 GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 MAX_FRAME = 4 * 1024 * 1024   # a tile's photos as base64 (protocol.MAX_PHOTO each, at most protocol.MAX_PHOTOS)
 MAX_POST = 64 * 1024
+SEND_TIMEOUT_S = 10   # a link that takes nothing for this long is dropped: a stuck backend must not stall the phone
 
 
 class Server(ThreadingHTTPServer):
@@ -150,8 +152,10 @@ def lan_address() -> str:
 class Link:
     """A connection (the phone's, or a backend's), as the edge sees it."""
 
-    def __init__(self, wfile, peer, kind="phone"):
-        self.wfile, self.peer, self.kind = wfile, peer, kind
+    def __init__(self, wfile, peer, kind="phone", sock=None):
+        self.wfile, self.peer, self.kind, self.sock = wfile, peer, kind, sock
+        if sock:   # writes give up when nothing moves for SEND_TIMEOUT_S (reads still wait as long as they like)
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_SNDTIMEO, struct.pack("ll", SEND_TIMEOUT_S, 0))
         self.lock = threading.Lock()
         self.open = True
 
@@ -167,9 +171,18 @@ class Link:
                 self.wfile.write(frame(text.encode()))
                 self.wfile.flush()
                 return True
-            except OSError:
+            except OSError:   # gone, or stuck: half a frame may have gone out, so the link is ended
                 self.open = False
+                self.shut()
                 return False
+
+    def shut(self):
+        """Ends the connection under its reader too (its pump stops, the link's owner is told)."""
+        if self.sock:
+            try:
+                self.sock.shutdown(socket.SHUT_RDWR)
+            except OSError:
+                pass
 
     def close(self, code: int = 1000):
         with self.lock:
@@ -432,7 +445,7 @@ def make_handler(server: PhoneServer):
 
         def serve_ws(self):
             self.connection.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
-            link = Link(self.wfile, self.client_address[0])
+            link = Link(self.wfile, self.client_address[0], sock=self.connection)
             server.take_over(link)
             server.on_open(link)
             try:
@@ -442,7 +455,7 @@ def make_handler(server: PhoneServer):
                     server.on_close(link)
 
         def serve_backend(self):
-            link = Link(self.wfile, self.client_address[0], kind="backend")
+            link = Link(self.wfile, self.client_address[0], kind="backend", sock=self.connection)
             with server.block:
                 server.backends = [b for b in server.backends if b.open]
                 full = len(server.backends) >= MAX_BACKENDS
