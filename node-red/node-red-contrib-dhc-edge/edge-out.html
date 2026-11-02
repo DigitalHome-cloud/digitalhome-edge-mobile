@@ -1,0 +1,39 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<!-- Copyright (C) 2026 DigitalHome.cloud -->
+<script type="text/javascript">
+  RED.nodes.registerType('dhc-edge-out', {
+    category: 'DigitalHome',
+    color: '#3fd8ff',
+    defaults: { name: { value: '' }, edge: { type: 'dhc-edge-config', required: true }, command: { value: 'payload' }, tile: { value: '' } },
+    inputs: 1, outputs: 0, icon: 'font-awesome/fa-mobile', align: 'right',
+    label: function () { return this.name || 'edge ' + (this.command === 'payload' ? 'command' : this.command) + (this.tile ? ': ' + this.tile : ''); },
+    paletteLabel: 'edge out',
+    oneditprepare: function () {
+      var row = $('#node-input-tile').closest('.form-row');
+      $('#node-input-command').on('change', function () { row.toggle($(this).val() === 'state'); }).trigger('change');
+    }
+  });
+</script>
+<script type="text/html" data-template-name="dhc-edge-out">
+  <div class="form-row"><label for="node-input-edge"><i class="fa fa-mobile"></i> Edge</label><input type="text" id="node-input-edge"></div>
+  <div class="form-row"><label for="node-input-command"><i class="fa fa-paper-plane"></i> Command</label>
+    <select id="node-input-command">
+      <option value="payload">msg.payload is the command</option><option value="say">say</option><option value="toast">toast</option>
+      <option value="state">state</option><option value="ask">ask</option><option value="profile">profile</option><option value="tiles">tiles</option>
+      <option value="vibrate">vibrate</option><option value="open">open</option><option value="home">home</option>
+    </select></div>
+  <div class="form-row"><label for="node-input-tile"><i class="fa fa-th-large"></i> Tile</label><input type="text" id="node-input-tile" placeholder="or msg.tile, or msg.topic's last part"></div>
+  <div class="form-row"><label for="node-input-name"><i class="fa fa-tag"></i> Name</label><input type="text" id="node-input-name"></div>
+</script>
+<script type="text/html" data-help-name="dhc-edge-out">
+  <p>A command to the edge and its phone.</p>
+  <h3>Inputs</h3>
+  <dl class="message-properties">
+    <dt>payload</dt><dd>the whole command (<code>{"t": "say", "text": "Hallo", "lang": "de"}</code>), or, with a command kind set, what fills it:
+      the text of <code>say</code> and <code>toast</code>, a tile's value for <code>state</code> (or <code>{tile: value}</code>),
+      the profile's id, a list of tiles, <code>{ask, text, options}</code>, a vibration's ms, a page.</dd>
+    <dt class="optional">tile</dt><dd><code>state</code>: the tile (else msg.topic's last part, as <code>edge in</code> sets it).</dd>
+    <dt class="optional">label, lang, ms</dt><dd>a word under the state; the voice's language; how long a toast shows.</dd>
+  </dl>
+  <p>A refused command comes back as an <code>error</code> event on <code>edge in</code>.</p>
+</script>

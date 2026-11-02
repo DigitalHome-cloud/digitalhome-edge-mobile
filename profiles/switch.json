@@ -1,0 +1,30 @@
+{
+  "_": "SPDX-License-Identifier: GPL-3.0-or-later. Copyright (C) 2026 DigitalHome.cloud. An intelligent switch with a display: tiles that show what the home says, and taps that ask the home to change it.",
+  "id": "switch",
+  "title": {"en": "Living room", "fr": "Salon", "de": "Wohnzimmer"},
+  "description": {"en": "A wall display: the backend sets each tile's state; a tap asks it to change.",
+                  "fr": "Un écran mural : le backend fixe l’état de chaque tuile ; un toucher lui demande de changer.",
+                  "de": "Ein Wanddisplay: das Backend setzt den Zustand jeder Kachel; ein Tippen bittet um eine Änderung."},
+  "style": "tiles", "columns": 2, "lang": "en",
+  "tiles": [
+    {"id": "ceiling", "icon": "💡", "color": "yellow", "action": "toggle", "speak": false,
+     "label": {"en": "Ceiling light", "fr": "Plafonnier", "de": "Deckenlicht"}},
+    {"id": "lamp", "icon": "🛋️", "color": "yellow", "action": "toggle", "speak": false,
+     "label": {"en": "Reading lamp", "fr": "Lampe de lecture", "de": "Leselampe"}},
+    {"id": "scene", "icon": "🎬", "color": "blue", "action": "choice", "speak": false,
+     "label": {"en": "Scene", "fr": "Ambiance", "de": "Szene"},
+     "options": [{"id": "day", "icon": "☀️", "label": {"en": "Day", "fr": "Jour", "de": "Tag"}},
+                 {"id": "evening", "icon": "🌆", "label": {"en": "Evening", "fr": "Soirée", "de": "Abend"}},
+                 {"id": "movie", "icon": "🍿", "label": {"en": "Movie", "fr": "Film", "de": "Film"}},
+                 {"id": "night", "icon": "🌙", "label": {"en": "Night", "fr": "Nuit", "de": "Nacht"}}]},
+    {"id": "blinds", "icon": "🪟", "color": "blue", "action": "choice", "speak": false,
+     "label": {"en": "Blinds", "fr": "Volets", "de": "Rollläden"},
+     "options": [{"id": "up", "icon": "⬆️", "label": {"en": "Up", "fr": "Haut", "de": "Hoch"}},
+                 {"id": "stop", "icon": "⏹️", "label": {"en": "Stop", "fr": "Stop", "de": "Stopp"}},
+                 {"id": "down", "icon": "⬇️", "label": {"en": "Down", "fr": "Bas", "de": "Runter"}}]},
+    {"id": "temp", "icon": "🌡️", "color": "grey", "action": "state", "unit": "°C", "speak": false,
+     "label": {"en": "Temperature", "fr": "Température", "de": "Temperatur"}},
+    {"id": "all_off", "icon": "🔌", "color": "red", "action": "send",
+     "label": {"en": "All off", "fr": "Tout éteindre", "de": "Alles aus"}, "data": {"scene": "off"}}
+  ]
+}

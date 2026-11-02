@@ -1,0 +1,38 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<!-- Copyright (C) 2026 DigitalHome.cloud -->
+<script type="text/javascript">
+  RED.nodes.registerType('dhc-edge-in', {
+    category: 'DigitalHome',
+    color: '#3fd8ff',
+    defaults: { name: { value: '' }, edge: { type: 'dhc-edge-config', required: true }, events: { value: 'tile' }, tiles: { value: '' },
+                photos: { value: 'base64' } },
+    inputs: 0, outputs: 1, icon: 'font-awesome/fa-mobile',
+    label: function () { return this.name || 'edge ' + (this.events || 'tile') + (this.tiles ? ': ' + this.tiles : ''); },
+    paletteLabel: 'edge in'
+  });
+</script>
+<script type="text/html" data-template-name="dhc-edge-in">
+  <div class="form-row"><label for="node-input-edge"><i class="fa fa-mobile"></i> Edge</label><input type="text" id="node-input-edge"></div>
+  <div class="form-row"><label for="node-input-events"><i class="fa fa-filter"></i> Events</label><input type="text" id="node-input-events" placeholder="tile, hello, bye, answer, status, profile, error, all"></div>
+  <div class="form-row"><label for="node-input-tiles"><i class="fa fa-th-large"></i> Tiles</label><input type="text" id="node-input-tiles" placeholder="all tiles; or: appliance, tag"></div>
+  <div class="form-row"><label for="node-input-photos"><i class="fa fa-camera"></i> Photos</label>
+    <select id="node-input-photos"><option value="base64">base64, as sent</option><option value="buffer">Buffer</option><option value="drop">dropped (size only)</option></select></div>
+  <div class="form-row"><label for="node-input-name"><i class="fa fa-tag"></i> Name</label><input type="text" id="node-input-name"></div>
+</script>
+<script type="text/html" data-help-name="dhc-edge-in">
+  <p>What happens on the phone: one message per event of the edge.</p>
+  <h3>Outputs</h3>
+  <dl class="message-properties">
+    <dt>payload <span class="property-type">object</span></dt><dd>the event: <code>{v, edge, t, profile, ts, n, ...}</code></dd>
+    <dt>topic <span class="property-type">string</span></dt><dd><code>&lt;edge&gt;/tile/&lt;tile&gt;</code>, or <code>&lt;edge&gt;/&lt;t&gt;</code></dd>
+    <dt>tile, data, value</dt><dd>for a tile: its id, what its steps got (step id → part), and a toggle's value</dd>
+  </dl>
+  <h3>Events</h3>
+  <ul>
+    <li><code>tile</code>: a tap, a pick, or a tile's steps done. A part is text, a number, true/false, a code
+      <code>{code, format}</code> or a photo <code>{jpeg, w, h, text}</code> (<code>text</code>: what the phone read on it).</li>
+    <li><code>hello</code> / <code>bye</code>: a phone came or went. <code>answer</code>: the answer to an <code>ask</code>.</li>
+    <li><code>status</code>: on connecting (the phone, the profile, the states). <code>profile</code>: the profile changed.
+      <code>error</code>: a command was refused.</li>
+  </ul>
+</script>

@@ -1,0 +1,119 @@
+[
+  {
+    "id": "c1",
+    "type": "comment",
+    "name": "Check in / out (profiles: checkinout, cellar, library)",
+    "info": "Start the edge with ./start.sh --profile cellar (or library,\ncheckinout). The stock is kept in this flow's context (flow.stock: code -> {qty, place, out}); put it in\nDigitalHome.cloud instead with an http request after 'stock'.",
+    "x": 220,
+    "y": 40,
+    "wires": []
+  },
+  {
+    "id": "in1",
+    "type": "dhc-edge-in",
+    "name": "in, out, lookup",
+    "edge": "edgecfg",
+    "events": "tile",
+    "tiles": "checkin,checkout,lookup",
+    "photos": "drop",
+    "x": 140,
+    "y": 120,
+    "wires": [
+      [
+        "f1"
+      ]
+    ]
+  },
+  {
+    "id": "f1",
+    "type": "function",
+    "name": "stock",
+    "func": "// in: add; out: take away (never below 0); lookup: say what is there\nconst stock = flow.get('stock') || {};\nconst d = msg.data, code = (d.code || d.lookup || {}).code;\nconst item = stock[code] || { qty: 0, place: '', lent: '' };\nconst qty = typeof d.qty === 'number' ? d.qty : 1;\nlet say;\nif (msg.tile === 'checkin') {\n  item.qty += qty; if (d.place) item.place = d.place; item.lent = '';\n  say = { en: '+' + qty + ' → ' + item.qty, fr: '+' + qty + ' → ' + item.qty, de: '+' + qty + ' → ' + item.qty };\n} else if (msg.tile === 'checkout') {\n  item.qty = Math.max(0, item.qty - qty); if (d.who) item.lent = d.who;\n  say = { en: '−' + qty + ' → ' + item.qty + (item.qty ? '' : ' (none left)'), fr: '−' + qty + ' → ' + item.qty + (item.qty ? '' : ' (plus aucun)'),\n          de: '−' + qty + ' → ' + item.qty + (item.qty ? '' : ' (keine mehr)') };\n} else {\n  say = item.qty ? { en: item.qty + ' in ' + (item.place || '?'), fr: item.qty + ' en ' + (item.place || '?'), de: item.qty + ' in ' + (item.place || '?') }\n                 : { en: 'Not in stock', fr: 'Pas en stock', de: 'Nicht im Bestand' };\n  if (item.lent) say = { en: 'Lent to ' + item.lent, fr: 'Prêté à ' + item.lent, de: 'Verliehen an ' + item.lent };\n}\nif (msg.tile !== 'lookup') stock[code] = item;\nflow.set('stock', stock);\nconst total = Object.values(stock).reduce((n, x) => n + x.qty, 0);\nreturn [{ payload: say }, { payload: total, tile: 'stock' }, { payload: { code, item, tile: msg.tile, data: d } }];",
+    "outputs": 3,
+    "noerr": 0,
+    "x": 380,
+    "y": 120,
+    "wires": [
+      [
+        "out1"
+      ],
+      [
+        "out2"
+      ],
+      [
+        "dbg1"
+      ]
+    ]
+  },
+  {
+    "id": "out1",
+    "type": "dhc-edge-out",
+    "name": "",
+    "edge": "edgecfg",
+    "command": "toast",
+    "tile": "",
+    "x": 620,
+    "y": 80,
+    "wires": []
+  },
+  {
+    "id": "out2",
+    "type": "dhc-edge-out",
+    "name": "",
+    "edge": "edgecfg",
+    "command": "state",
+    "tile": "stock",
+    "x": 620,
+    "y": 120,
+    "wires": []
+  },
+  {
+    "id": "dbg1",
+    "type": "debug",
+    "name": "stock change",
+    "active": true,
+    "complete": "payload",
+    "targetType": "msg",
+    "x": 620,
+    "y": 160,
+    "wires": []
+  },
+  {
+    "id": "in2",
+    "type": "dhc-edge-in",
+    "name": "a phone came",
+    "edge": "edgecfg",
+    "events": "hello",
+    "tiles": "",
+    "photos": "base64",
+    "x": 140,
+    "y": 220,
+    "wires": [
+      [
+        "f2"
+      ]
+    ]
+  },
+  {
+    "id": "f2",
+    "type": "function",
+    "name": "the stock again",
+    "func": "const stock = flow.get('stock') || {};\nreturn { payload: Object.values(stock).reduce((n, x) => n + x.qty, 0), tile: 'stock' };",
+    "outputs": 1,
+    "noerr": 0,
+    "x": 380,
+    "y": 220,
+    "wires": [
+      [
+        "out2"
+      ]
+    ]
+  },
+  {
+    "id": "edgecfg",
+    "type": "dhc-edge-config",
+    "name": "phone edge",
+    "url": "ws://127.0.0.1:8790/ws/backend",
+    "insecure": false
+  }
+]

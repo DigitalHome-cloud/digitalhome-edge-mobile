@@ -1,0 +1,246 @@
+[
+  {
+    "id": "c1",
+    "type": "comment",
+    "name": "Home inventory (profile: inventory)",
+    "info": "Start the edge with ./start.sh --profile inventory.\nEach 'New appliance' becomes an inventory record, POSTed to DigitalHome.cloud: set the environment variable\nDHC_API (e.g. https://<your platform>/api) for the real one; without it the record goes to the mock endpoint\nbelow (POST /dhc-mock/inventory on this Node-RED), which answers with an id.",
+    "x": 200,
+    "y": 40,
+    "wires": []
+  },
+  {
+    "id": "in1",
+    "type": "dhc-edge-in",
+    "name": "inventory tiles",
+    "edge": "edgecfg",
+    "events": "tile",
+    "tiles": "appliance,plate_only,tag",
+    "photos": "base64",
+    "x": 130,
+    "y": 120,
+    "wires": [
+      [
+        "sw1"
+      ]
+    ]
+  },
+  {
+    "id": "sw1",
+    "type": "switch",
+    "name": "which tile",
+    "property": "tile",
+    "propertyType": "msg",
+    "rules": [
+      {
+        "t": "eq",
+        "v": "appliance",
+        "vt": "str"
+      },
+      {
+        "t": "eq",
+        "v": "plate_only",
+        "vt": "str"
+      },
+      {
+        "t": "eq",
+        "v": "tag",
+        "vt": "str"
+      }
+    ],
+    "checkall": "false",
+    "repair": false,
+    "outputs": 3,
+    "x": 330,
+    "y": 120,
+    "wires": [
+      [
+        "f1"
+      ],
+      [
+        "f3"
+      ],
+      [
+        "f4"
+      ]
+    ]
+  },
+  {
+    "id": "f1",
+    "type": "function",
+    "name": "inventory record",
+    "func": "// one appliance: its room, photo, type plate (and what the phone read on it), note\nconst d = msg.data;\nconst record = {\n  edge: msg.edge, at: new Date(msg.payload.ts * 1000).toISOString(), kind: d.kind, room: d.room,\n  plate_text: d.plate && d.plate.text || '', note: d.note || '',\n  photos: { appliance: d.photo && d.photo.jpeg, plate: d.plate && d.plate.jpeg }   // base64 JPEGs\n};\nmsg.payload = record;\nmsg.method = 'POST';\nmsg.url = (env.get('DHC_API') || 'http://127.0.0.1:1880/dhc-mock') + '/inventory';\nmsg.headers = { 'Content-Type': 'application/json' };\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "x": 560,
+    "y": 80,
+    "wires": [
+      [
+        "http1"
+      ]
+    ]
+  },
+  {
+    "id": "http1",
+    "type": "http request",
+    "name": "DigitalHome.cloud",
+    "method": "use",
+    "ret": "obj",
+    "paytoqs": "ignore",
+    "url": "",
+    "tls": "",
+    "persist": false,
+    "proxy": "",
+    "insecureHTTPParser": false,
+    "authType": "",
+    "senderr": false,
+    "headers": [],
+    "x": 780,
+    "y": 80,
+    "wires": [
+      [
+        "f2"
+      ]
+    ]
+  },
+  {
+    "id": "f2",
+    "type": "function",
+    "name": "answer the phone",
+    "func": "// saved (or not): a toast, and the 'Recorded' tile counts\nif (msg.statusCode >= 200 && msg.statusCode < 300) {\n  const n = (flow.get('count') || 0) + 1;\n  flow.set('count', n);\n  return [{ payload: { en: 'Saved ✓', fr: 'Enregistré ✓', de: 'Gespeichert ✓' } }, { payload: n, tile: 'count', label: 'today' }];\n}\nreturn [{ payload: { en: 'Not saved: ' + msg.statusCode, fr: 'Non enregistré : ' + msg.statusCode, de: 'Nicht gespeichert: ' + msg.statusCode } }, null];",
+    "outputs": 2,
+    "noerr": 0,
+    "x": 990,
+    "y": 80,
+    "wires": [
+      [
+        "out1"
+      ],
+      [
+        "out2"
+      ]
+    ]
+  },
+  {
+    "id": "f3",
+    "type": "function",
+    "name": "say the plate",
+    "func": "// the plate read on the phone, said back\nconst t = (msg.data.plate_only || {}).text || '';\nreturn { payload: t ? t.split('\\n')[0] : 'No text', lang: msg.payload.lang };",
+    "outputs": 1,
+    "noerr": 0,
+    "x": 560,
+    "y": 140,
+    "wires": [
+      [
+        "out3"
+      ]
+    ]
+  },
+  {
+    "id": "f4",
+    "type": "function",
+    "name": "tag lookup",
+    "func": "// a scanned tag: known appliances are kept in flow context by their code (fill it from DigitalHome.cloud)\nconst code = (msg.data.tag || {}).code;\nconst known = flow.get('tags') || {};\nmsg.payload = known[code] ? { en: known[code], fr: known[code], de: known[code] } : { en: 'Not in the inventory yet: ' + code, fr: 'Pas encore inventorié : ' + code, de: 'Noch nicht erfasst: ' + code };\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "x": 560,
+    "y": 200,
+    "wires": [
+      [
+        "out1"
+      ]
+    ]
+  },
+  {
+    "id": "out1",
+    "type": "dhc-edge-out",
+    "name": "",
+    "edge": "edgecfg",
+    "command": "toast",
+    "tile": "",
+    "x": 1210,
+    "y": 60,
+    "wires": []
+  },
+  {
+    "id": "out2",
+    "type": "dhc-edge-out",
+    "name": "",
+    "edge": "edgecfg",
+    "command": "state",
+    "tile": "count",
+    "x": 1210,
+    "y": 100,
+    "wires": []
+  },
+  {
+    "id": "out3",
+    "type": "dhc-edge-out",
+    "name": "",
+    "edge": "edgecfg",
+    "command": "say",
+    "tile": "",
+    "x": 780,
+    "y": 140,
+    "wires": []
+  },
+  {
+    "id": "mock1",
+    "type": "http in",
+    "name": "",
+    "url": "/dhc-mock/inventory",
+    "method": "post",
+    "upload": false,
+    "swaggerDoc": "",
+    "x": 190,
+    "y": 300,
+    "wires": [
+      [
+        "f5",
+        "dbg1"
+      ]
+    ]
+  },
+  {
+    "id": "f5",
+    "type": "function",
+    "name": "mock: give it an id",
+    "func": "msg.statusCode = 201;\nmsg.payload = { id: 'appl-' + Date.now(), room: msg.payload.room };\nreturn msg;",
+    "outputs": 1,
+    "noerr": 0,
+    "x": 430,
+    "y": 300,
+    "wires": [
+      [
+        "resp1"
+      ]
+    ]
+  },
+  {
+    "id": "resp1",
+    "type": "http response",
+    "name": "",
+    "statusCode": "",
+    "headers": {},
+    "x": 630,
+    "y": 300,
+    "wires": []
+  },
+  {
+    "id": "dbg1",
+    "type": "debug",
+    "name": "inventory record",
+    "active": true,
+    "complete": "payload",
+    "targetType": "msg",
+    "x": 430,
+    "y": 340,
+    "wires": []
+  },
+  {
+    "id": "edgecfg",
+    "type": "dhc-edge-config",
+    "name": "phone edge",
+    "url": "ws://127.0.0.1:8790/ws/backend",
+    "insecure": false
+  }
+]

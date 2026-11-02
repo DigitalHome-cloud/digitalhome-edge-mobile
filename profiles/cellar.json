@@ -1,0 +1,33 @@
+{
+  "_": "SPDX-License-Identifier: GPL-3.0-or-later. Copyright (C) 2026 DigitalHome.cloud. The wine cellar: check in / out with racks, a rating when a bottle is opened.",
+  "id": "cellar",
+  "extends": "checkinout",
+  "title": {"en": "Wine cellar", "fr": "Cave à vin", "de": "Weinkeller"},
+  "tiles": [
+    {"id": "checkin", "icon": "🍷", "data": {"direction": "in", "store": "cellar"},
+     "steps": [
+       {"id": "code", "action": "scan", "label": {"en": "Label code", "fr": "Code de l’étiquette", "de": "Etikett-Code"},
+        "prompt": {"en": "Scan the bottle's barcode", "fr": "Scannez le code-barres de la bouteille", "de": "Strichcode der Flasche scannen"}},
+       {"id": "qty", "action": "number", "min": 1, "max": 24, "default": 1, "unit": "🍾",
+        "label": {"en": "Bottles", "fr": "Bouteilles", "de": "Flaschen"}},
+       {"id": "place", "action": "choice", "label": {"en": "Rack", "fr": "Casier", "de": "Regal"},
+        "options": [{"id": "r1", "label": {"en": "Rack 1", "fr": "Casier 1", "de": "Regal 1"}},
+                    {"id": "r2", "label": {"en": "Rack 2", "fr": "Casier 2", "de": "Regal 2"}},
+                    {"id": "r3", "label": {"en": "Rack 3", "fr": "Casier 3", "de": "Regal 3"}},
+                    {"id": "fridge", "icon": "❄️", "label": {"en": "Wine fridge", "fr": "Cave réfrigérée", "de": "Weinkühlschrank"}}]}
+     ]},
+    {"id": "checkout", "icon": "🥂", "data": {"direction": "out", "store": "cellar"},
+     "steps": [
+       {"id": "code", "action": "scan", "label": {"en": "Label code", "fr": "Code de l’étiquette", "de": "Etikett-Code"},
+        "prompt": {"en": "Scan the bottle's barcode", "fr": "Scannez le code-barres de la bouteille", "de": "Strichcode der Flasche scannen"}},
+       {"id": "qty", "action": "number", "min": 1, "max": 24, "default": 1, "unit": "🍾",
+        "label": {"en": "Bottles", "fr": "Bouteilles", "de": "Flaschen"}},
+       {"id": "rating", "action": "choice", "label": {"en": "How was it?", "fr": "Comment était-il ?", "de": "Wie war er?"},
+        "options": [{"id": "1", "icon": "😕", "label": {"en": "So-so", "fr": "Bof", "de": "Naja"}},
+                    {"id": "2", "icon": "🙂", "label": {"en": "Good", "fr": "Bon", "de": "Gut"}},
+                    {"id": "3", "icon": "😍", "label": {"en": "Great", "fr": "Excellent", "de": "Toll"}},
+                    {"id": "later", "icon": "⏳", "label": {"en": "Later", "fr": "Plus tard", "de": "Später"}}]}
+     ]},
+    {"id": "stock", "icon": "🍇", "label": {"en": "Bottles", "fr": "Bouteilles", "de": "Flaschen"}}
+  ]
+}

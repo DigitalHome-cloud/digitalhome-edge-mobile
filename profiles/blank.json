@@ -1,0 +1,10 @@
+{
+  "_": "SPDX-License-Identifier: GPL-3.0-or-later. Copyright (C) 2026 DigitalHome.cloud. The smallest profile: copy it to start a new use case (docs/profiles.md).",
+  "id": "blank",
+  "title": {"en": "Edge", "fr": "Edge", "de": "Edge"},
+  "style": "tiles", "columns": 2, "lang": "en",
+  "tiles": [
+    {"id": "hello", "icon": "👋", "action": "send", "label": {"en": "Hello", "fr": "Bonjour", "de": "Hallo"}},
+    {"id": "status", "icon": "ℹ️", "color": "grey", "action": "state", "label": {"en": "Status", "fr": "État", "de": "Status"}}
+  ]
+}

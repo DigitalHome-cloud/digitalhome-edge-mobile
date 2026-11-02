@@ -1,0 +1,107 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<!-- Copyright (C) 2026 Atelier-5 -->
+<!-- Copyright (C) 2026 DigitalHome.cloud -->
+<!-- The phone: the profile's tiles (big, high contrast, an icon and a word, said when touched: the style of
+     atl-phone's Omi Assist), and the steps a tile asks for (a choice, a number, a code, a photo read on the phone, a
+     note), then one message to the edge (contract dhc-edge/0.1). The phone decides nothing: what a tile means is the
+     backend's (Node-RED, MQTT, ROS 2), which answers with states, words and questions.
+     ?key=... when the edge has a pairing key; ?lang=en|fr|de; ?autostart=1 skips the start tap. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#000000">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/home-192.png">
+<title>DigitalHome edge</title>
+<style>
+  :root { --bg: #000; --fg: #fff; --muted: #9ab; --blue: #3fd8ff; --green: #33ff66; --yellow: #ffd23f; --red: #ff5a4f;
+          --grey: #9aa7ad; --tile: #10303a; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg); overflow: hidden;
+               font: 18px/1.3 system-ui, -apple-system, Roboto, sans-serif; -webkit-user-select: none; user-select: none; }
+  body { display: flex; flex-direction: column; }
+  button { font: inherit; color: inherit; touch-action: manipulation; }
+  header { display: flex; align-items: center; gap: 10px; padding: 8px 12px; flex: none; }
+  header h1 { margin: 0; font-size: clamp(18px, 5vw, 26px); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #link { width: 12px; height: 12px; border-radius: 50%; background: var(--red); flex: none; }
+  #link.on { background: #1f7a3f; }
+  main { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 0 12px calc(12px + env(safe-area-inset-bottom)); }
+  /* the tiles: Omi's, in a grid (the profile's columns) */
+  #home { flex: 1; display: grid; gap: 12px; grid-auto-rows: 1fr; min-height: 0; }
+  .tile { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-height: 0;
+          border-radius: 20px; padding: 8px 6px; background: var(--tile); border: 3px solid var(--blue); overflow: hidden;
+          font: 700 clamp(17px, 5vw, 30px)/1.1 system-ui, sans-serif; }
+  .tile i { font-style: normal; font-size: 1.6em; line-height: 1; }
+  .tile span { text-align: center; hyphens: auto; -webkit-hyphens: auto; }
+  .tile small { font: 600 0.7em ui-monospace, monospace; color: var(--muted); text-align: center; }
+  .tile small b { color: var(--fg); font-size: 1.25em; }
+  .tile.on { background: #1f6a7c; border-color: #fff; }
+  .tile.flash { background: var(--blue); color: #000; }
+  .tile.wait small { animation: pulse 0.8s infinite alternate; }
+  @keyframes pulse { from { opacity: 1; } to { opacity: 0.3; } }
+  .c-green { border-color: var(--green); } .c-green.on { background: #1f5a2a; }
+  .c-yellow { border-color: var(--yellow); } .c-yellow.on { background: #6a5a10; }
+  .c-red { border-color: var(--red); background: #3a1310; }
+  .c-grey { border-color: var(--grey); background: #1c2326; }
+  /* a tile's steps: one screen each */
+  #flow { flex: 1; min-height: 0; display: none; flex-direction: column; gap: 10px; }
+  #flow .top { display: flex; justify-content: space-between; color: var(--muted); font-size: 15px; }
+  #flow h2 { margin: 0; font-size: clamp(22px, 7vw, 36px); }
+  #flow .body { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 12px; }
+  #flow .grid { flex: 1; display: grid; gap: 10px; grid-template-columns: 1fr 1fr; grid-auto-rows: 1fr; min-height: 0; }
+  #flow .bar { display: flex; gap: 10px; flex: none; }
+  .big { flex: 1; min-height: 72px; border-radius: 18px; border: 3px solid var(--blue); background: var(--tile);
+         font: 700 clamp(18px, 6vw, 30px) system-ui, sans-serif; }
+  .big.go { border-color: var(--green); background: #0f3a1c; }
+  .big.no { flex: 0 0 72px; border-color: var(--grey); background: #1c2326; }   /* Cancel, Back: an icon each */
+  .big:disabled { opacity: 0.35; }
+  video, #flow img.shot { flex: 1; min-height: 0; width: 100%; object-fit: cover; border-radius: 18px; background: #222;
+                          border: 3px solid var(--yellow); }
+  .scanbox { position: relative; flex: 1; min-height: 0; display: flex; }
+  .scanbox::after { content: ''; position: absolute; left: 12%; right: 12%; top: 30%; bottom: 30%; border: 3px dashed var(--green);
+                    border-radius: 12px; pointer-events: none; }
+  .num { display: flex; align-items: center; justify-content: center; gap: 18px; flex: 1; }
+  .num b { font-size: clamp(48px, 18vw, 96px); min-width: 2ch; text-align: center; }
+  .num button { width: 88px; height: 88px; border-radius: 50%; font-size: 44px; border: 3px solid var(--blue); background: var(--tile); }
+  textarea, input.code { flex: 1; min-height: 3em; font: 600 clamp(18px, 5.5vw, 26px)/1.3 system-ui, sans-serif; color: var(--fg);
+                         background: #111; border: 3px solid var(--blue); border-radius: 14px; padding: 10px; resize: none;
+                         -webkit-user-select: text; user-select: text; }
+  input.code { flex: none; min-height: 0; }
+  .note { color: var(--muted); font-size: 16px; }
+  .review { flex: 1; overflow: auto; display: flex; flex-direction: column; gap: 8px; }
+  .review div { display: flex; gap: 10px; align-items: center; border-bottom: 1px solid #234; padding: 6px 0; }
+  .review b { color: var(--muted); font-weight: 600; min-width: 34%; }
+  .review img { height: 64px; border-radius: 8px; }
+  /* what the edge says, written big for a moment */
+  #toast { position: fixed; left: 12px; right: 12px; top: 52px; z-index: 5; display: none; padding: 14px 16px; border-radius: 18px;
+           background: rgba(0, 0, 0, 0.9); border: 3px solid var(--blue); text-align: center; pointer-events: none;
+           font: 700 clamp(22px, 7vw, 38px)/1.25 system-ui, sans-serif; overflow-wrap: anywhere; }
+  /* a question (ask): a card over everything, its answers below */
+  #card { position: fixed; inset: 0; z-index: 6; display: none; flex-direction: column; justify-content: center; gap: 24px;
+          padding: 24px 18px; box-sizing: border-box; background: rgba(0, 0, 0, 0.95); text-align: center; }
+  #card p { margin: 0; font: 700 clamp(26px, 8vw, 44px)/1.25 system-ui, sans-serif; overflow-wrap: anywhere; }
+  #card div { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; }
+  #card button { flex: 1 1 40%; min-height: 84px; border-radius: 20px; border: 3px solid var(--green); background: #0f3a1c;
+                 font: 700 clamp(22px, 7vw, 36px) system-ui, sans-serif; }
+  #card button + button { border-color: var(--yellow); background: #3a300f; }
+  #start { position: fixed; inset: 0; z-index: 9; display: flex; flex-direction: column; align-items: center; justify-content: center;
+           gap: 16px; background: #000; color: #ddd; text-align: center; padding: 16px; }
+  #start button { font-size: 1.4em; padding: 14px 36px; border-radius: 12px; border: 0; background: var(--blue); color: #000; }
+  #start small { color: #888; max-width: 30em; }
+</style>
+</head>
+<body>
+<header><div id="link" title="edge"></div><h1 id="title">DigitalHome</h1></header>
+<main>
+  <div id="home"></div>
+  <div id="flow"><div class="top"><span id="crumb"></span><span id="count"></span></div><h2 id="ask"></h2><div class="body" id="body"></div></div>
+</main>
+<div id="toast"></div>
+<div id="card"></div>
+<div id="start"><button id="go">▶</button><div id="hint"></div><small id="note"></small></div>
+<script src="texts.js"></script>
+<script src="app.js"></script>
+<script src="actions.js"></script>
+</body>
+</html>

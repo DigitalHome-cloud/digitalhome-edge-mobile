@@ -1,0 +1,21 @@
+{
+  "name": "node-red-contrib-dhc-edge",
+  "version": "0.1.0",
+  "description": "Node-RED nodes for a DigitalHome.cloud phone edge (contract dhc-edge/0.1): the phone's events in, commands out",
+  "license": "GPL-3.0-or-later",
+  "author": "DigitalHome.cloud",
+  "repository": {"type": "git", "url": "https://github.com/DigitalHome-cloud/digitalhome-edge-mobile.git", "directory": "node-red/node-red-contrib-dhc-edge"},
+  "keywords": ["node-red", "digitalhome", "edge", "phone", "iot"],
+  "engines": {"node": ">=18"},
+  "dependencies": {"ws": "8.18.0"},
+  "scripts": {"test": "node --test test/"},
+  "node-red": {
+    "version": ">=3.0.0",
+    "nodes": {
+      "dhc-edge-config": "edge-config.js",
+      "dhc-edge-in": "edge-in.js",
+      "dhc-edge-out": "edge-out.js"
+    }
+  },
+  "files": ["*.js", "*.html", "examples/", "README.md"]
+}

@@ -1,0 +1,381 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<!-- Copyright (C) 2026 Atelier-5 -->
+<!-- Copyright (C) 2026 DigitalHome.cloud -->
+<!-- The phone check (from atl-phone): can this old phone be an edge's screen, camera and code reader?
+     Plain ES2017, no build step: it must run on old Chrome too. Its report goes to the edge (POST /report). -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Phone check</title>
+<style>
+  :root { --bg: #fafaf7; --fg: #1d1d1b; --muted: #6b6b66; --line: #e2e2dc;
+          --yes: #1f7a3f; --no: #b3261e; --maybe: #9a6700; --btn: #1d1d1b; --btnfg: #fff; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #161615; --fg: #ecece6; --muted: #9a9a93; --line: #33332f;
+            --yes: #5cc47e; --no: #f2766d; --maybe: #e0b341; --btn: #ecece6; --btnfg: #161615; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 16px; background: var(--bg); color: var(--fg);
+         font: 16px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  header { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  h1 { font-size: 1.4em; margin: 0 0 4px; }
+  .sub { color: var(--muted); margin: 0 0 12px; }
+  .lang button { background: none; border: 1px solid var(--line); color: var(--fg); padding: 4px 8px; border-radius: 6px; }
+  .lang button.on { border-color: var(--fg); }
+  .lang a { color: var(--fg); margin-right: 8px; }
+  h2 { font-size: 1em; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 20px 0 6px; }
+  .row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+  .row .name { flex: 1; min-width: 0; }
+  .row .note { display: block; color: var(--muted); font-size: .85em; word-break: break-word; }
+  .st { font-weight: 600; min-width: 4.5em; text-align: right; }
+  .yes { color: var(--yes); } .no { color: var(--no); } .maybe { color: var(--maybe); }
+  button.test { background: var(--btn); color: var(--btnfg); border: 0; border-radius: 6px; padding: 6px 10px; font: inherit; }
+  .actions { display: flex; gap: 8px; flex-wrap: wrap; margin: 20px 0; }
+  .actions button { flex: 1; min-width: 9em; padding: 10px; }
+  video { width: 100%; max-height: 40vh; background: #000; border-radius: 8px; display: none; margin-top: 8px; }
+  #verdict { padding: 12px; border: 2px solid var(--line); border-radius: 8px; margin: 12px 0; }
+  #msg { color: var(--muted); min-height: 1.4em; }
+</style>
+</head>
+<body>
+<header>
+  <h1 data-t="title">Phone check</h1>
+  <div class="lang"><a id="toface" href="app.html" data-t="face">Tiles</a> <button data-l="en">EN</button> <button data-l="fr">FR</button> <button data-l="de">DE</button></div>
+</header>
+<p class="sub" data-t="intro">Can this phone be the home's screen, camera and code reader? Tap each Test button.</p>
+<div id="verdict"></div>
+<div id="list"></div>
+<video id="video" playsinline muted></video>
+<div class="actions">
+  <button class="test" id="all" data-t="all">Test everything</button>
+  <button class="test" id="send" data-t="send">Send report to the PC</button>
+  <button class="test" id="copy" data-t="copy">Copy report</button>
+</div>
+<p id="msg"></p>
+
+<script>
+'use strict';
+
+var T = {
+  en: { title: 'Phone check', intro: 'Can this phone be the home’s screen, camera and code reader? Tap each Test button.',
+        all: 'Test everything', send: 'Send report to the PC', face: 'Tiles →', copy: 'Copy report', test: 'Test', stop: 'Stop', level: 'level', wait_tests: 'Waiting for the running tests…',
+        yes: 'yes', no: 'no', untested: '?', g_phone: 'This phone', g_face: 'Screen', g_eyes: 'Camera, codes and text',
+        g_ears: 'Voice and sound', g_body: 'Tags', g_link: 'Link to the edge',
+        sent: 'Report saved on the PC', sending: 'Sending the report to the PC…', to_face: 'Back to the tiles…', stay: 'Stay here',
+        not_kept: 'The edge got the report but keeps no registry (start it with ./start.sh).', copied: 'Report copied.', failed: 'Could not send: ',
+        show_code: 'Show a QR code or barcode to the back camera (any package will do). None at hand? It goes on by itself in', clap: 'Speak or clap now, then tap Stop…',
+        nfc: 'Hold an NFC tag to the phone…',
+        v_good: 'Good edge phone: everything the templates need works.', v_ok: 'Usable, with gaps: ', v_bad: 'Too old for the web page: ',
+        v_wait: 'Tap “Test everything” (allow the camera and the microphone).',
+        insecure: 'Not a secure page: camera and microphone are blocked. Use USB (localhost) or HTTPS.' },
+  fr: { title: 'Test du téléphone', intro: 'Ce téléphone peut-il être l’écran, la caméra et le lecteur de codes de la maison ? Touchez chaque bouton Tester.',
+        all: 'Tout tester', send: 'Envoyer le rapport au PC', face: 'Tuiles →', copy: 'Copier le rapport', test: 'Tester', stop: 'Arrêter', level: 'niveau', wait_tests: 'Attente des tests en cours…',
+        yes: 'oui', no: 'non', untested: '?', g_phone: 'Ce téléphone', g_face: 'Écran', g_eyes: 'Caméra, codes et texte',
+        g_ears: 'Voix et son', g_body: 'Puces', g_link: 'Lien avec l’edge',
+        sent: 'Rapport enregistré sur le PC', sending: 'Envoi du rapport au PC…', to_face: 'Retour aux tuiles…', stay: 'Rester ici',
+        not_kept: 'L’edge a reçu le rapport mais ne tient pas de registre (lancez-le avec ./start.sh).', copied: 'Rapport copié.', failed: 'Envoi impossible : ',
+        show_code: 'Montrez un QR code ou un code-barres à la caméra arrière (n’importe quel emballage). Aucun sous la main ? Le test continue tout seul dans', clap: 'Parlez ou tapez dans vos mains, puis touchez Arrêter…',
+        nfc: 'Approchez une puce NFC du téléphone…',
+        v_good: 'Bon téléphone d’edge : tout ce qu’il faut aux modèles fonctionne.', v_ok: 'Utilisable, avec des manques : ', v_bad: 'Trop ancien pour la page web : ',
+        v_wait: 'Touchez « Tout tester » (autorisez la caméra et le micro).',
+        insecure: 'Page non sécurisée : caméra et micro bloqués. Passez par USB (localhost) ou HTTPS.' },
+  de: { title: 'Handy-Check', intro: 'Kann dieses Handy Bildschirm, Kamera und Code-Leser des Hauses sein? Tippe auf jeden Test-Knopf.',
+        all: 'Alles testen', send: 'Bericht an den PC senden', face: 'Kacheln →', copy: 'Bericht kopieren', test: 'Testen', stop: 'Stopp', level: 'Pegel', wait_tests: 'Warte auf die laufenden Tests…',
+        yes: 'ja', no: 'nein', untested: '?', g_phone: 'Dieses Handy', g_face: 'Bildschirm', g_eyes: 'Kamera, Codes und Text',
+        g_ears: 'Stimme und Ton', g_body: 'Tags', g_link: 'Verbindung zum Edge',
+        sent: 'Bericht auf dem PC gespeichert', sending: 'Bericht wird an den PC gesendet…', to_face: 'Zurück zu den Kacheln…', stay: 'Hier bleiben',
+        not_kept: 'Das Edge hat den Bericht, führt aber kein Verzeichnis (mit ./start.sh starten).', copied: 'Bericht kopiert.', failed: 'Senden fehlgeschlagen: ',
+        show_code: 'Zeige der Rückkamera einen QR-Code oder Strichcode (jede Verpackung geht). Keiner da? Es geht von selbst weiter in', clap: 'Sprich oder klatsche jetzt, dann tippe auf Stopp…',
+        nfc: 'Halte einen NFC-Tag an das Handy…',
+        v_good: 'Gutes Edge-Handy: alles, was die Vorlagen brauchen, funktioniert.', v_ok: 'Brauchbar, mit Lücken: ', v_bad: 'Zu alt für die Webseite: ',
+        v_wait: 'Tippe auf „Alles testen“ (Kamera und Mikrofon erlauben).',
+        insecure: 'Keine sichere Seite: Kamera und Mikrofon sind gesperrt. USB (localhost) oder HTTPS nutzen.' }
+};
+var lang = 'en';
+try { lang = localStorage.getItem('dhc-lang') || (navigator.language || 'en').slice(0, 2); } catch (e) {}
+if (!T[lang]) lang = 'en';
+function t(k) { return T[lang][k] || T.en[k] || k; }
+
+// Each check: group, id, label (same in all languages: they are names), what version 1 needs it for,
+// probe() -> {ok, note} without a gesture, and optionally test() -> {ok, note}, which may ask permission.
+var report = { contract: 'dhc-edge-check/0.1', when: null, checks: {} };
+var checks = [];
+function check(group, id, label, need, probe, test) { checks.push({ group: group, id: id, label: label, need: need, probe: probe, test: test }); }
+function has(o, k) { try { return o && (k in o); } catch (e) { return false; } }
+function wait(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+function say(k) { document.getElementById('msg').textContent = t(k); }
+
+function androidVersion() { var m = navigator.userAgent.match(/Android ([\d.]+)/); return m ? m[1] : null; }
+function chromeVersion() { var m = navigator.userAgent.match(/Chrome\/(\d+)/); return m ? +m[1] : null; }
+
+// The phone itself
+check('g_phone', 'android', 'Android', 'info', function () {
+  var v = androidVersion(); return { ok: v ? parseFloat(v) >= 8 : null, note: v ? 'Android ' + v : navigator.platform };
+});
+check('g_phone', 'chrome', 'Chrome', 'core', function () {
+  var v = chromeVersion(); return { ok: v ? v >= 80 : null, note: v ? 'Chrome ' + v + (v < 80 ? ' (< 80)' : '') : navigator.userAgent };
+});
+check('g_phone', 'secure', 'Secure page', 'core', function () {
+  return { ok: !!window.isSecureContext, note: location.protocol + '//' + location.host + (window.isSecureContext ? '' : ' — ' + t('insecure')) };
+});
+check('g_phone', 'battery', 'Battery', 'nice', function () { return { ok: has(navigator, 'getBattery'), note: '' }; }, async function () {
+  var b = await navigator.getBattery(); return { ok: true, note: Math.round(b.level * 100) + '%' + (b.charging ? ', charging' : '') };
+});
+
+check('g_phone', 'headroom', 'Headroom', 'info', function () {  // memory and cores as Chrome says them; the test: how busy it is now
+  return { ok: null, note: (navigator.deviceMemory ? '≥' + navigator.deviceMemory + ' GB' : '? GB') + ', ' + (navigator.hardwareConcurrency || '?') + ' cores' };
+}, async function () {
+  var late = 0, n = 0, t0 = performance.now(), last = t0;
+  await new Promise(function (done) {  // a tick every 50 ms for a second: what comes late is time other work took
+    var id = setInterval(function () {
+      var now = performance.now(); late += Math.max(0, now - last - 50); last = now; n++;
+      if (now - t0 >= 1000) { clearInterval(id); done(); }
+    }, 50);
+  });
+  var x = 0, k = 0, s0 = performance.now();
+  while (performance.now() - s0 < 200) { for (var i = 0; i < 10000; i++) x += Math.sqrt(i + k); k++; }  // a small sum, for speed
+  var busy = Math.round(late / 10);
+  return { ok: busy < 30, note: (navigator.deviceMemory ? '≥' + navigator.deviceMemory + ' GB' : '? GB') + ', ' + (navigator.hardwareConcurrency || '?') +
+           ' cores, main thread ' + busy + '% busy, ' + Math.round(k * 10000 / 200 / 1000) + ' Mops/s' };
+});
+// Face
+check('g_face', 'screen', 'Screen', 'core', function () {
+  return { ok: true, note: screen.width + '×' + screen.height + ' @' + (window.devicePixelRatio || 1) + 'x' };
+});
+check('g_face', 'fullscreen', 'Full screen', 'core', function () {
+  var el = document.documentElement; return { ok: !!(el.requestFullscreen || el.webkitRequestFullscreen), note: '' };
+});
+check('g_face', 'wakelock', 'Screen stays on (Wake Lock)', 'core', function () { return { ok: has(navigator, 'wakeLock'), note: '' }; }, async function () {
+  var l = await navigator.wakeLock.request('screen'); await l.release(); return { ok: true, note: 'granted' };
+});
+check('g_face', 'orientation', 'Lock the orientation', 'later', function () {
+  return { ok: !!(screen.orientation && screen.orientation.lock), note: screen.orientation ? screen.orientation.type : '' };
+});
+check('g_face', 'webgl', 'WebGL', 'nice', function () {
+  var c = document.createElement('canvas'); var g = c.getContext('webgl') || c.getContext('experimental-webgl');
+  var r = ''; if (g) { var d = g.getExtension('WEBGL_debug_renderer_info'); r = d ? g.getParameter(d.UNMASKED_RENDERER_WEBGL) : 'yes'; }
+  return { ok: !!g, note: r };
+});
+check('g_face', 'touch', 'Touch', 'core', function () { return { ok: (navigator.maxTouchPoints || 0) > 0 || has(window, 'ontouchstart'), note: (navigator.maxTouchPoints || 0) + ' points' }; });
+
+// Eyes
+var stream = null;
+async function camera() {
+  if (stream) return stream;
+  var v = document.getElementById('video');
+  stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width: { ideal: 640 } }, audio: false });
+  v.srcObject = stream; v.style.display = 'block'; await v.play(); return stream;
+}
+function stopCamera() {
+  if (!stream) return; stream.getTracks().forEach(function (k) { k.stop(); }); stream = null;
+  document.getElementById('video').style.display = 'none';
+}
+check('g_eyes', 'camera', 'Back camera', 'core', function () { return { ok: !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) && window.isSecureContext, note: '' }; }, async function () {
+  var s = await camera(); var st = s.getVideoTracks()[0].getSettings(); return { ok: true, note: st.width + '×' + st.height + (st.frameRate ? ' ' + Math.round(st.frameRate) + ' fps' : '') };
+});
+check('g_eyes', 'torch', 'Torch (headlight)', 'nice', function () { return { ok: null, note: '' }; }, async function () {
+  var k = (await camera()).getVideoTracks()[0]; var caps = k.getCapabilities ? k.getCapabilities() : {};
+  if (!caps.torch) return { ok: false, note: 'no torch capability' };
+  await k.applyConstraints({ advanced: [{ torch: true }] }); await wait(800); await k.applyConstraints({ advanced: [{ torch: false }] });
+  return { ok: true, note: 'on/off' };
+});
+check('g_eyes', 'barcode', 'Built-in code reader (BarcodeDetector)', 'nice', function () { return { ok: has(window, 'BarcodeDetector'), note: has(window, 'BarcodeDetector') ? '' : 'fallback: wasm reader' }; }, async function () {
+  var formats = await BarcodeDetector.getSupportedFormats();
+  if (!formats.length) return { ok: false, note: 'no formats (Play services missing?)' };
+  var d = new BarcodeDetector({ formats: formats }); var v = document.getElementById('video'); await camera();
+  for (var i = 0; i < 40; i++) {
+    if (i % 4 === 0) document.getElementById('msg').textContent = t('show_code') + ' ' + (10 - i / 4) + ' s';
+    var found = await d.detect(v);
+    if (found.length) return { ok: true, note: found[0].format + ': ' + String(found[0].rawValue).slice(0, 40) + ' · ' + formats.join(', ') };
+    await wait(250);
+  }
+  return { ok: null, note: 'no code seen in 10 s · ' + formats.join(', ') };
+});
+check('g_eyes', 'zxing', 'Fallback code reader (ZXing)', 'nice', function () { return { ok: null, note: has(window, 'BarcodeDetector') ? 'not needed if the built-in one reads' : 'used for scan steps' }; }, async function () {
+  if (!window.ZXing) await new Promise(function (ok, no) { var sc = document.createElement('script'); sc.src = 'vendor/zxing/zxing.min.js'; sc.onload = ok; sc.onerror = no; document.head.appendChild(sc); });
+  var c = document.createElement('canvas'); c.width = 640; c.height = 480; c.getContext('2d').fillRect(0, 0, 640, 480);
+  var r = new ZXing.MultiFormatReader(), t0 = performance.now();
+  for (var i = 0; i < 5; i++) { try { r.decode(new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(new ZXing.HTMLCanvasElementLuminanceSource(c)))); } catch (e) {} }
+  var ms = Math.round((performance.now() - t0) / 5);
+  return { ok: ms < 400, note: ms + ' ms per picture' };
+});
+check('g_eyes', 'ocr', 'Text reader (Tesseract, type plates)', 'nice', function () { return { ok: typeof WebAssembly === 'object', note: 'WebAssembly' }; }, async function () {
+  if (!window.Tesseract) await new Promise(function (ok, no) { var sc = document.createElement('script'); sc.src = 'vendor/tesseract/tesseract.min.js'; sc.onload = ok; sc.onerror = no; document.head.appendChild(sc); });
+  var base = new URL('vendor/tesseract/', location.href).href, t0 = performance.now();
+  var w = await Tesseract.createWorker('eng', 1, { workerPath: base + 'worker.min.js', corePath: base, langPath: base + 'lang', workerBlobURL: false, gzip: true, cacheMethod: 'none' });
+  var load = Math.round(performance.now() - t0);
+  var c = document.createElement('canvas'); c.width = 600; c.height = 160; var g = c.getContext('2d');
+  g.fillStyle = '#fff'; g.fillRect(0, 0, 600, 160); g.fillStyle = '#000'; g.font = 'bold 44px sans-serif'; g.fillText('TYPE AB 1234', 30, 70); g.fillText('230 V 50 Hz', 30, 130);
+  var t1 = performance.now(), r = await w.recognize(c), ms = Math.round(performance.now() - t1); await w.terminate();
+  var got = (r.data.text || '').replace(/\s+/g, ' ').trim();
+  return { ok: /AB ?1234/.test(got), note: 'loads in ' + load + ' ms, reads in ' + ms + ' ms: “' + got.slice(0, 40) + '”' };
+});
+// Ears and voice
+var mic = { on: false, stop: false };  // the microphone test runs until Stop
+function micNote(s) { var n = document.getElementById('note-mic'); if (n) n.textContent = s; }
+check('g_ears', 'mic', 'Microphone', 'later', function () { return { ok: !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia) && window.isSecureContext, note: '' }; }, async function () {
+  var s = await navigator.mediaDevices.getUserMedia({ audio: true }); var Ctx = window.AudioContext || window.webkitAudioContext;
+  var ctx = new Ctx(); var an = ctx.createAnalyser(); ctx.createMediaStreamSource(s).connect(an);
+  try { await Promise.race([ctx.resume(), wait(1000)]); } catch (e) {}  // a context made long after the last tap starts suspended: it hears only silence
+  var buf = new Float32Array(an.fftSize), peak = 0; say('clap'); mic.on = true; mic.stop = false; render();
+  for (var i = 0; i < 300 && !mic.stop; i++) {  // until Stop is tapped, at most 30 s; the level shows as it comes
+    an.getFloatTimeDomainData(buf); var level = 0;
+    for (var j = 0; j < buf.length; j++) level = Math.max(level, Math.abs(buf[j]));
+    peak = Math.max(peak, level); micNote(t('level') + ' ' + level.toFixed(2) + ' · peak ' + peak.toFixed(2));
+    await wait(100);
+  }
+  mic.on = false; var state = ctx.state;
+  s.getTracks().forEach(function (k) { k.stop(); }); ctx.close();
+  return { ok: peak > 0.02, note: 'peak ' + peak.toFixed(2) + ' @ ' + ctx.sampleRate + ' Hz' + (state === 'running' ? '' : ' · sound ' + state + ': tap Test again') };
+});
+check('g_ears', 'tts', 'Speech (text to speech)', 'core', function () { return { ok: has(window, 'speechSynthesis'), note: '' }; }, async function () {
+  var vs = speechSynthesis.getVoices();
+  for (var i = 0; i < 30 && !vs.length; i++) { await wait(100); vs = speechSynthesis.getVoices(); }  // some phones load them late
+  var langs = ['en', 'fr', 'de'].filter(function (l) { return vs.some(function (v) { return v.lang.slice(0, 2) === l; }); });
+  var tag = { en: 'en-GB', fr: 'fr-FR', de: 'de-DE' }[lang];
+  var u = new SpeechSynthesisUtterance({ en: 'Hello, this is your home.', fr: 'Bonjour, ici votre maison.', de: 'Hallo, hier ist dein Zuhause.' }[lang]);
+  u.lang = tag;  // and the voice itself: a language alone (with voices said as fr_FR) never starts on some phones
+  u.voice = vs.filter(function (v) { return v.lang.replace('_', '-') === tag; })[0] || vs.filter(function (v) { return v.lang.slice(0, 2) === lang; })[0] || null;
+  var started = await new Promise(function (ok) {
+    u.onstart = function () { ok(true); }; u.onerror = function () { ok(false); };
+    speechSynthesis.cancel(); speechSynthesis.speak(u); setTimeout(function () { ok(false); }, 4000);
+  });
+  var names = ['de', 'fr'].map(function (l) {  // the voices' names only, for German and French
+    var n = vs.filter(function (v) { return v.lang.slice(0, 2) === l; }).map(function (v) { return v.name; });
+    return l + ': ' + (n.join(', ') || 'none');
+  });
+  return { ok: langs.length === 3 && started, note: 'voices: ' + (langs.join(', ') || 'none') + ' · ' + names.join(' · ') + (started ? '' : ' · it did not start speaking') };
+});
+check('g_ears', 'vibrate', 'Vibration', 'nice', function () { return { ok: has(navigator, 'vibrate'), note: '' }; }, async function () {
+  return { ok: navigator.vibrate([200, 100, 200]), note: 'felt it?' };
+});
+
+// Tags
+check('g_body', 'nfc', 'NFC tags (Web NFC: check in by tag)', 'later', function () { return { ok: has(window, 'NDEFReader'), note: '' }; }, async function () {
+  var r = new NDEFReader(); await r.scan(); say('nfc');
+  return await Promise.race([
+    new Promise(function (ok) { r.onreading = function (e) { ok({ ok: true, note: 'tag ' + e.serialNumber }); }; }),
+    wait(10000).then(function () { return { ok: true, note: 'scan allowed, no tag in 10 s' }; })
+  ]);
+});
+
+// Link
+check('g_link', 'websocket', 'WebSocket', 'core', function () { return { ok: has(window, 'WebSocket'), note: '' }; });
+check('g_link', 'network', 'Network', 'info', function () {
+  var c = navigator.connection; return { ok: navigator.onLine, note: c ? (c.type || '') + ' ' + (c.effectiveType || '') : '' };
+});
+
+// Rendering
+var groups = ['g_phone', 'g_face', 'g_eyes', 'g_ears', 'g_body', 'g_link'];
+function render() {
+  document.documentElement.lang = lang;
+  [].forEach.call(document.querySelectorAll('[data-t]'), function (el) { el.textContent = t(el.getAttribute('data-t')); });
+  [].forEach.call(document.querySelectorAll('.lang button'), function (b) { b.className = b.getAttribute('data-l') === lang ? 'on' : ''; });
+  var list = document.getElementById('list'); list.innerHTML = '';
+  groups.forEach(function (g) {
+    var h = document.createElement('h2'); h.textContent = t(g); list.appendChild(h);
+    checks.filter(function (c) { return c.group === g; }).forEach(function (c) {
+      var r = report.checks[c.id] || {}; var row = document.createElement('div'); row.className = 'row';
+      var name = document.createElement('div'); name.className = 'name'; name.textContent = c.label;
+      var note = document.createElement('span'); note.className = 'note'; note.id = 'note-' + c.id; note.textContent = r.note || ''; name.appendChild(note);
+      var st = document.createElement('div'); st.className = 'st ' + (r.ok === true ? 'yes' : r.ok === false ? 'no' : 'maybe');
+      st.textContent = r.ok === true ? t('yes') : r.ok === false ? t('no') : t('untested');
+      row.appendChild(name); row.appendChild(st);
+      if (c.test) {
+        var b = document.createElement('button'); b.className = 'test';
+        if (c.id === 'mic' && mic.on) { b.textContent = t('stop'); b.onclick = function () { mic.stop = true; }; }
+        else { b.textContent = t('test'); b.disabled = running.has(c.id); b.onclick = function () { run(c); }; }
+        row.appendChild(b);
+      }
+      list.appendChild(row);
+    });
+  });
+  verdict();
+}
+function verdict() {
+  var el = document.getElementById('verdict');
+  var core = checks.filter(function (c) { return c.need === 'core'; });
+  var tested = checks.filter(function (c) { return c.test; }).some(function (c) { return report.checks[c.id] && report.checks[c.id].tested; });
+  var missing = core.filter(function (c) { return report.checks[c.id] && report.checks[c.id].ok === false; }).map(function (c) { return c.label; });
+  var fatal = ['chrome', 'websocket'].filter(function (id) { return report.checks[id] && report.checks[id].ok === false; });
+  if (fatal.length) { el.textContent = t('v_bad') + missing.join(', '); el.style.borderColor = 'var(--no)'; }
+  else if (missing.length) { el.textContent = t('v_ok') + missing.join(', '); el.style.borderColor = 'var(--maybe)'; }
+  else if (!tested) { el.textContent = t('v_wait'); el.style.borderColor = 'var(--line)'; }
+  else { el.textContent = t('v_good'); el.style.borderColor = 'var(--yes)'; }
+}
+function probeAll() {
+  checks.forEach(function (c) {
+    try { var r = c.probe(); report.checks[c.id] = { ok: r.ok, note: r.note, need: c.need, tested: false }; }
+    catch (e) { report.checks[c.id] = { ok: false, note: String(e), need: c.need, tested: false }; }
+  });
+  report.when = new Date().toISOString(); report.userAgent = navigator.userAgent; report.phone_id = phoneId(); render();
+  var uad = navigator.userAgentData;  // the real model (the user agent says "K"), on a secure page
+  if (uad && uad.getHighEntropyValues) uad.getHighEntropyValues(['model']).then(function (v) { if (v.model) report.model = v.model; }).catch(function () {});
+}
+var running = new Map();  // test id -> its promise: the report waits for them
+function run(c) {
+  if (!c.test || running.has(c.id)) return running.get(c.id);
+  var p = runOne(c).then(function () { running.delete(c.id); render(); });
+  running.set(c.id, p); render(); return p;
+}
+async function runOne(c) {
+  try { var r = await c.test(); report.checks[c.id] = { ok: r.ok, note: r.note, need: c.need, tested: true }; }
+  catch (e) { report.checks[c.id] = { ok: false, note: (e && e.name ? e.name + ': ' : '') + (e && e.message || e), need: c.need, tested: true }; }
+  say('');
+}
+document.getElementById('all').onclick = async function () {  // every test, then the report to the PC, then the tiles
+  var b = this, send = document.getElementById('send'); b.disabled = true; send.disabled = true;  // the report waits for the whole run
+  try { for (var i = 0; i < checks.length; i++) if (checks[i].test && checks[i].id !== 'nfc' && checks[i].id !== 'mic') await run(checks[i]); }
+  finally { stopCamera(); b.disabled = false; send.disabled = false; }
+  sendReport();
+};
+function phoneId() {  // a random id kept in this browser (as app.js): it ties this phone's check report to it, and says nothing about the phone
+  try {
+    var id = localStorage.getItem('dhc-edge-id');
+    if (!/^[0-9a-f]{16}$/.test(id || '')) {
+      id = Array.prototype.map.call(crypto.getRandomValues(new Uint8Array(8)), function (b) { return (b + 256).toString(16).slice(1); }).join('');
+      localStorage.setItem('dhc-edge-id', id);
+    }
+    return id;
+  } catch (e) { return ''; }  // storage blocked: the setup page falls back to the model
+}
+function text() { return JSON.stringify(report, null, 2); }
+var faceTimer = 0;
+function faceUrl() {  // back to the tiles; the pairing key goes along
+  var q = location.search.slice(1).split('&').filter(function (kv) { return /^key=/.test(kv); });
+  return 'app.html' + (q.length ? '?' + q.join('&') : '');
+}
+function sendReport() {  // to the edge's registry (reports/<model>/), then back to the tiles in 3 s, unless asked to stay
+  var b = document.getElementById('send'), msg = document.getElementById('msg');
+  if (b.disabled) return;
+  b.disabled = true; clearTimeout(faceTimer);
+  if (running.size) { msg.textContent = t('wait_tests'); mic.stop = true; }  // a report sent too early lost the tests still running
+  Promise.all(Array.from(running.values())).then(function () {
+  msg.textContent = t('sending');
+  return fetch('report', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: text() })
+    .then(function (r) { if (!r.ok) throw new Error(r.status); return r.status === 200 ? r.json() : {}; })
+    .then(function (a) {
+      msg.textContent = (a.saved ? t('sent') + ': ' + a.saved + '. ' : a.saved === null ? t('not_kept') + ' ' : t('sent') + '. ') + t('to_face') + ' ';
+      var stay = document.createElement('button'); stay.className = 'test'; stay.id = 'stay'; stay.textContent = t('stay');
+      stay.onclick = function () { clearTimeout(faceTimer); stay.remove(); };
+      msg.appendChild(stay);
+      faceTimer = setTimeout(function () { location.href = faceUrl(); }, 3000);
+    });
+  }).catch(function (e) { msg.textContent = t('failed') + e.message; })
+    .then(function () { b.disabled = false; });
+}
+document.getElementById('send').onclick = sendReport;
+document.getElementById('copy').onclick = function () {
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text()).then(function () { say('copied'); });
+  else { var a = document.createElement('textarea'); a.value = text(); document.body.appendChild(a); a.select(); document.execCommand('copy'); a.remove(); say('copied'); }
+};
+[].forEach.call(document.querySelectorAll('.lang button'), function (b) {
+  b.onclick = function () { lang = b.getAttribute('data-l'); try { localStorage.setItem('dhc-lang', lang); } catch (e) {} render(); };
+});
+document.getElementById('toface').href = faceUrl();
+probeAll();
+</script>
+</body>
+</html>

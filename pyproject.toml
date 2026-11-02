@@ -1,0 +1,16 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 DigitalHome.cloud
+[project]
+name = "dhc-edge"
+version = "0.1.0"
+description = "A phone as the edge of DigitalHome.cloud: its web page, its link, and adapters for Node-RED, MQTT and ROS 2"
+license = {text = "GPL-3.0-or-later"}
+requires-python = ">=3.8"
+dependencies = []
+
+[project.optional-dependencies]
+mqtt = ["paho-mqtt==2.1.0"]
+test = ["pytest"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

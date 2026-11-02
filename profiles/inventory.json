@@ -1,0 +1,42 @@
+{
+  "_": "SPDX-License-Identifier: GPL-3.0-or-later. Copyright (C) 2026 DigitalHome.cloud. Home inventory: an appliance's room, its photo and its type plate (read on the phone), for the home's digital twin.",
+  "id": "inventory",
+  "title": {"en": "Home inventory", "fr": "Inventaire", "de": "Inventar"},
+  "description": {"en": "Photograph each appliance and its type plate; the backend builds the inventory.",
+                  "fr": "Photographiez chaque appareil et sa plaque signalétique ; le backend construit l’inventaire.",
+                  "de": "Jedes Gerät und sein Typenschild fotografieren; das Backend baut das Inventar."},
+  "style": "tiles", "columns": 2, "lang": "en",
+  "tiles": [
+    {"id": "appliance", "icon": "📷", "color": "blue", "action": "steps",
+     "label": {"en": "New appliance", "fr": "Nouvel appareil", "de": "Neues Gerät"},
+     "data": {"kind": "appliance"},
+     "steps": [
+       {"id": "room", "action": "choice", "label": {"en": "Room", "fr": "Pièce", "de": "Raum"},
+        "prompt": {"en": "Which room?", "fr": "Quelle pièce ?", "de": "Welcher Raum?"},
+        "options": [
+          {"id": "kitchen", "icon": "🍳", "label": {"en": "Kitchen", "fr": "Cuisine", "de": "Küche"}},
+          {"id": "living", "icon": "🛋️", "label": {"en": "Living room", "fr": "Salon", "de": "Wohnzimmer"}},
+          {"id": "bath", "icon": "🛁", "label": {"en": "Bathroom", "fr": "Salle de bain", "de": "Bad"}},
+          {"id": "bedroom", "icon": "🛏️", "label": {"en": "Bedroom", "fr": "Chambre", "de": "Schlafzimmer"}},
+          {"id": "office", "icon": "💻", "label": {"en": "Office", "fr": "Bureau", "de": "Büro"}},
+          {"id": "laundry", "icon": "🧺", "label": {"en": "Laundry", "fr": "Buanderie", "de": "Waschküche"}},
+          {"id": "cellar", "icon": "🪜", "label": {"en": "Cellar", "fr": "Cave", "de": "Keller"}},
+          {"id": "garage", "icon": "🚗", "label": {"en": "Garage", "fr": "Garage", "de": "Garage"}}
+        ]},
+       {"id": "photo", "action": "photo", "label": {"en": "Appliance", "fr": "Appareil", "de": "Gerät"},
+        "prompt": {"en": "A photo of the whole appliance", "fr": "Une photo de l’appareil entier", "de": "Ein Foto vom ganzen Gerät"}},
+       {"id": "plate", "action": "photo", "ocr": true, "label": {"en": "Type plate", "fr": "Plaque signalétique", "de": "Typenschild"},
+        "prompt": {"en": "Now the type plate, close up", "fr": "Maintenant la plaque, de près", "de": "Jetzt das Typenschild, von nah"}},
+       {"id": "note", "action": "text", "max": 200, "label": {"en": "Note", "fr": "Note", "de": "Notiz"},
+        "prompt": {"en": "A note (may stay empty)", "fr": "Une note (peut rester vide)", "de": "Eine Notiz (darf leer bleiben)"}}
+     ]},
+    {"id": "tag", "icon": "🏷️", "color": "green", "action": "scan",
+     "label": {"en": "Scan a tag", "fr": "Scanner une étiquette", "de": "Etikett scannen"},
+     "prompt": {"en": "The appliance's QR code or barcode", "fr": "Le QR code ou code-barres de l’appareil", "de": "QR-Code oder Strichcode des Geräts"}},
+    {"id": "plate_only", "icon": "🔎", "color": "yellow", "action": "photo", "ocr": true,
+     "label": {"en": "Read a plate", "fr": "Lire une plaque", "de": "Schild lesen"},
+     "prompt": {"en": "The type plate, close up", "fr": "La plaque, de près", "de": "Das Typenschild, von nah"}},
+    {"id": "count", "icon": "📋", "color": "grey", "action": "state",
+     "label": {"en": "Recorded", "fr": "Enregistrés", "de": "Erfasst"}}
+  ]
+}

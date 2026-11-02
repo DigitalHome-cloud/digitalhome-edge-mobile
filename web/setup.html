@@ -1,0 +1,164 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<!-- Copyright (C) 2026 Atelier-5 -->
+<!-- Copyright (C) 2026 DigitalHome.cloud -->
+<!-- The edge's test console, on this PC (http://localhost:8790/setup.html): the edge and its adapters, connecting a
+     phone (USB or Wi-Fi by QR code, as atl-phone's setup page), the profile it shows (and pretend taps, to try a flow
+     without a phone), the events the backends get, and commands as a backend sends them. It reads /api/state and acts
+     through /api/act: this PC only. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="icons/home-192.png">
+<title>Edge setup</title>
+<style>
+  :root { --bg: #fafaf7; --panel: #ffffff; --fg: #1d1d1b; --muted: #6b6b66; --line: #e2e2dc; --accent: #0b7fa3;
+          --yes: #1f7a3f; --no: #b3261e; --wait: #9a6700; --chip: #f0f0ea; --code: #f3f3ee; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #161615; --panel: #1f1f1d; --fg: #ecece6; --muted: #9a9a93; --line: #33332f; --accent: #3fd8ff;
+            --yes: #5cc47e; --no: #f2766d; --wait: #e0b341; --chip: #2a2a27; --code: #262624; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  header { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+  header h1 { font-size: 1.2em; margin: 0; }
+  header .meta { color: var(--muted); flex: 1; }
+  header a { color: var(--accent); }
+  .lang button { background: none; border: 1px solid var(--line); color: var(--fg); padding: 3px 8px; border-radius: 6px; cursor: pointer; }
+  .lang button.on { border-color: var(--fg); }
+  .wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; max-width: 1200px; margin: 0 auto; padding: 16px; }
+  @media (max-width: 900px) { .wrap { grid-template-columns: 1fr; } }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px 20px; min-width: 0; }
+  section.wide { grid-column: 1 / -1; }
+  h2 { margin: 0 0 4px; font-size: 1.2em; }
+  h3 { margin: 16px 0 6px; font-size: 1em; }
+  p.lead { color: var(--muted); margin: 0 0 12px; }
+  code, pre { font: 13px ui-monospace, Menlo, Consolas, monospace; background: var(--code); border-radius: 6px; }
+  code { padding: 1px 5px; }
+  pre { padding: 8px 10px; overflow-x: auto; margin: 6px 0; display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+  button.b { background: var(--accent); color: var(--bg); border: 0; border-radius: 8px; padding: 7px 12px; font: inherit; cursor: pointer; }
+  button.b.ghost { background: none; color: var(--fg); border: 1px solid var(--line); }
+  button.b:disabled { opacity: .4; cursor: default; }
+  button.small { padding: 2px 8px; font-size: 12px; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .tabs { display: flex; gap: 6px; margin: 8px 0 12px; }
+  .tabs button { background: none; border: 1px solid var(--line); color: var(--fg); padding: 6px 14px; border-radius: 8px; font: inherit; cursor: pointer; }
+  .tabs button.on { border-color: var(--accent); color: var(--accent); font-weight: 600; }
+  .status { display: flex; gap: 10px; align-items: center; padding: 10px 12px; border-radius: 8px; background: var(--chip); margin: 12px 0; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--no); flex: none; }
+  .dot.on { background: var(--yes); }
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .chip { background: var(--chip); border-radius: 999px; padding: 2px 10px; font-size: 13px; }
+  .chip.yes { background: var(--yes); color: #fff; }
+  .chip.no { text-decoration: line-through; color: var(--muted); }
+  .qr { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+  .qr canvas { background: #fff; padding: 8px; border-radius: 8px; }
+  .warn { border-left: 3px solid var(--wait); padding: 6px 10px; background: var(--chip); border-radius: 4px; margin: 10px 0; }
+  .hint { font-size: 13px; color: var(--muted); }
+  table { border-collapse: collapse; width: 100%; }
+  td, th { text-align: left; padding: 5px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-weight: 500; font-size: 13px; width: 30%; }
+  ol.steps { margin: 6px 0; padding-left: 22px; }
+  ol.steps li { margin: 4px 0; }
+  select, textarea { font: inherit; padding: 5px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); }
+  textarea { width: 100%; font: 13px ui-monospace, Menlo, Consolas, monospace; min-height: 120px; }
+  /* the profile, as the phone shows it, small */
+  .phone { display: grid; gap: 8px; padding: 10px; border-radius: 14px; background: #000; max-width: 360px; }
+  .phone button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 78px;
+                  border-radius: 12px; border: 2px solid #3fd8ff; background: #10303a; color: #fff; font: 700 14px system-ui, sans-serif; cursor: pointer; }
+  .phone button i { font-style: normal; font-size: 22px; }
+  .phone button small { font: 500 11px ui-monospace, monospace; color: #9ab; }
+  .phone .c-green { border-color: #33ff66; } .phone .c-yellow { border-color: #ffd23f; } .phone .c-red { border-color: #ff5a4f; background: #3a1310; }
+  .phone .c-grey { border-color: #9aa7ad; background: #1c2326; } .phone .on { background: #1f6a7c; border-color: #fff; }
+  .split { display: grid; grid-template-columns: auto 1fr; gap: 16px; align-items: start; }
+  @media (max-width: 640px) { .split { grid-template-columns: 1fr; } }
+  /* the events */
+  #log { max-height: 520px; overflow: auto; display: flex; flex-direction: column; gap: 6px; }
+  .ev { border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; font-size: 13px; }
+  .ev .h { display: flex; gap: 8px; align-items: baseline; }
+  .ev .h b { font-family: ui-monospace, monospace; }
+  .ev .h span { color: var(--muted); }
+  .ev pre { display: block; white-space: pre-wrap; word-break: break-all; margin: 4px 0 0; max-height: 160px; }
+  .ev img { height: 72px; border-radius: 6px; margin: 4px 6px 0 0; }
+  .t-tile b { color: var(--accent); } .t-error b { color: var(--no); } .t-hello b, .t-bye b { color: var(--yes); }
+</style>
+</head>
+<body>
+<header>
+  <h1 data-t="title">Edge setup</h1>
+  <span class="meta" id="meta"></span>
+  <a id="docs" href="/docs/" target="_blank" data-t="docs" style="display:none">Architecture</a>
+  <div class="lang"><button data-l="en">EN</button> <button data-l="fr">FR</button> <button data-l="de">DE</button></div>
+</header>
+<div class="wrap">
+  <section>
+    <h2 data-t="s_edge">The edge</h2>
+    <p class="lead" data-t="s_edge_lead">This PC serves the phone's page and passes what happens on to the backends.</p>
+    <table id="edge"></table>
+    <h3 data-t="adapters">Adapters</h3>
+    <table id="adapters"></table>
+    <p class="hint" data-t="nodered_hint">Node-RED: install node-red-contrib-dhc-edge, add a “dhc edge” config node with this address and the token from .edge/token.</p>
+  </section>
+
+  <section>
+    <h2 data-t="s_connect">Connect the phone</h2>
+    <div class="tabs"><button data-tab="usb" class="on">USB</button><button data-tab="wifi">Wi-Fi</button></div>
+    <div id="tab-usb">
+      <ol class="steps">
+        <li data-t="usb1">On the phone: Settings › About phone › tap “Build number” seven times.</li>
+        <li data-t="usb2">Settings › Developer options › turn on “USB debugging”.</li>
+        <li data-t="usb3">Plug the phone into this PC and allow it on the phone.</li>
+        <li><span data-t="usb4">On this PC, in the edge's folder:</span><pre><span>./scripts/usb.sh</span><button class="b ghost small" data-copy="./scripts/usb.sh" data-t="copy">Copy</button></pre></li>
+        <li data-t="usb5">The page opens on the phone: tap ▶.</li>
+      </ol>
+      <p class="hint" data-t="usb_why">USB makes the page the phone's “localhost”: a secure page, so the camera works without certificates. The cable charges the phone too.</p>
+    </div>
+    <div id="tab-wifi" style="display:none">
+      <div class="warn" id="wifi-warn" data-t="wifi_warn">Without HTTPS the tiles work, but the camera is blocked on Wi-Fi. Use USB, or start the edge with a certificate: ./start.sh --make-cert</div>
+      <div id="ca-steps" style="display:none">
+        <h3 data-t="ca_h">Once per phone: let it trust this PC</h3>
+        <div class="qr"><canvas id="qr-ca"></canvas><ol class="steps"><li data-t="ca1"></li><li data-t="ca2"></li><li data-t="ca3"></li></ol></div>
+        <h3 data-t="ca_then">Then, every time: the page</h3>
+      </div>
+      <ol class="steps">
+        <li data-t="wifi1">Put the phone on the same Wi-Fi as this PC.</li>
+        <li data-t="wifi2">Scan the code with the phone's camera, or type the address:</li>
+      </ol>
+      <div class="qr"><canvas id="qr"></canvas><div><pre><span id="wifi-url"></span><button class="b ghost small" id="copy-wifi" data-t="copy">Copy</button></pre></div></div>
+    </div>
+    <div class="status"><span class="dot" id="phone-dot"></span><span id="phone-status"></span></div>
+    <div class="chips" id="phone-caps"></div>
+    <div class="row" style="margin-top:10px">
+      <button class="b ghost" id="open-check" data-t="open_check">Open the phone check</button>
+      <button class="b ghost" id="open-app" data-t="open_app">Back to the tiles</button>
+    </div>
+    <p class="hint" id="reports"></p>
+  </section>
+
+  <section class="wide">
+    <h2 data-t="s_profile">The profile</h2>
+    <p class="lead" data-t="s_profile_lead">What the phone shows. A tap here pretends to be the phone (steps get sample answers), so a flow can be tried without one.</p>
+    <div class="row"><select id="profile"></select><button class="b" id="show" data-t="show">Show on the phone</button><span class="hint" id="profile-note"></span></div>
+    <div class="warn" id="photo-warn" style="display:none" data-t="photo_warn">This profile takes photos: they go from the phone to the backends, inside the tile's event. The edge keeps none (the last few, in memory, for this page).</div>
+    <div class="split" style="margin-top:12px"><div class="phone" id="preview"></div><table id="tiles"></table></div>
+  </section>
+
+  <section>
+    <h2 data-t="s_events">Events</h2>
+    <p class="lead" data-t="s_events_lead">What the backends get, newest first.</p>
+    <div id="log"></div>
+  </section>
+
+  <section>
+    <h2 data-t="s_command">Send a command</h2>
+    <p class="lead" data-t="s_command_lead">As a backend sends it (Node-RED, MQTT, ROS 2): JSON, contract dhc-edge/0.1.</p>
+    <div class="row"><select id="preset"></select><button class="b" id="send" data-t="send">Send</button><span class="hint" id="sent"></span></div>
+    <textarea id="cmd" spellcheck="false" style="margin-top:8px"></textarea>
+    <p class="hint" data-t="cmd_hint">docs/contract.md lists every command and its fields.</p>
+  </section>
+</div>
+<script src="vendor/qrcode.js"></script>
+<script src="setup.js"></script>
+</body>
+</html>

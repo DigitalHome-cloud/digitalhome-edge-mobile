@@ -218,3 +218,11 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# digitalhome-edge-mobile
+# the backends' token; this PC's certificate authority and the edge's certificate (scripts/make_cert.sh); the phones
+# checked (check.html), one folder per model
+.edge/
+certs/
+reports/
+node_modules/

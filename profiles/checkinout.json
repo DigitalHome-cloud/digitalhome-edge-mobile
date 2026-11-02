@@ -1,0 +1,36 @@
+{
+  "_": "SPDX-License-Identifier: GPL-3.0-or-later. Copyright (C) 2026 DigitalHome.cloud. Check in / check out: things with a code (a bottle, a book, a tool) going in and out of a store. cellar.json and library.json extend it.",
+  "id": "checkinout",
+  "title": {"en": "Check in / out", "fr": "Entrée / sortie", "de": "Ein- / Ausgang"},
+  "description": {"en": "Scan what goes in or out; the backend keeps the stock and answers.",
+                  "fr": "Scannez ce qui entre ou sort ; le backend tient le stock et répond.",
+                  "de": "Scannen, was rein- oder rausgeht; das Backend führt den Bestand und antwortet."},
+  "style": "tiles", "columns": 2, "lang": "en",
+  "tiles": [
+    {"id": "checkin", "icon": "📥", "color": "green", "action": "steps",
+     "label": {"en": "Check in", "fr": "Entrée", "de": "Einlagern"},
+     "data": {"direction": "in"},
+     "steps": [
+       {"id": "code", "action": "scan", "label": {"en": "Code", "fr": "Code", "de": "Code"},
+        "prompt": {"en": "Scan its code", "fr": "Scannez son code", "de": "Code scannen"}},
+       {"id": "qty", "action": "number", "min": 1, "max": 48, "default": 1,
+        "label": {"en": "How many", "fr": "Combien", "de": "Wie viele"}},
+       {"id": "place", "action": "choice", "label": {"en": "Where", "fr": "Où", "de": "Wo"},
+        "options": [{"id": "a", "label": "A"}, {"id": "b", "label": "B"}, {"id": "c", "label": "C"}, {"id": "d", "label": "D"}]}
+     ]},
+    {"id": "checkout", "icon": "📤", "color": "yellow", "action": "steps",
+     "label": {"en": "Check out", "fr": "Sortie", "de": "Auslagern"},
+     "data": {"direction": "out"},
+     "steps": [
+       {"id": "code", "action": "scan", "label": {"en": "Code", "fr": "Code", "de": "Code"},
+        "prompt": {"en": "Scan its code", "fr": "Scannez son code", "de": "Code scannen"}},
+       {"id": "qty", "action": "number", "min": 1, "max": 48, "default": 1,
+        "label": {"en": "How many", "fr": "Combien", "de": "Wie viele"}}
+     ]},
+    {"id": "lookup", "icon": "🔍", "color": "blue", "action": "scan",
+     "label": {"en": "What is it?", "fr": "Qu’est-ce ?", "de": "Was ist das?"},
+     "prompt": {"en": "Scan a code: the backend answers", "fr": "Scannez un code : le backend répond", "de": "Code scannen: das Backend antwortet"}},
+    {"id": "stock", "icon": "📦", "color": "grey", "action": "state",
+     "label": {"en": "In stock", "fr": "En stock", "de": "Im Bestand"}}
+  ]
+}

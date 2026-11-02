@@ -1,0 +1,18 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 DigitalHome.cloud
+# The edge with the ros2 adapter too: ROS 2 Kilted (Ubuntu 24.04), rclpy and std_msgs from the base image.
+#
+#   docker build -f docker/Dockerfile.ros2 -t dhc-edge:ros2-kilted .
+#   docker run --rm --net=host -e FASTDDS_BUILTIN_TRANSPORTS=UDPv4 dhc-edge:ros2-kilted --adapter ros2,nodered
+FROM ros:kilted-ros-base
+ARG DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends python3-pip && rm -rf /var/lib/apt/lists/* \
+    && pip install --no-cache-dir --break-system-packages paho-mqtt==2.1.0
+WORKDIR /app
+COPY dhc_edge/ dhc_edge/
+COPY web/ web/
+COPY profiles/ profiles/
+COPY docs/architecture/ docs/architecture/
+COPY docker/entrypoint-ros2.sh /entrypoint.sh
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["--profile", "blank", "--adapter", "ros2"]

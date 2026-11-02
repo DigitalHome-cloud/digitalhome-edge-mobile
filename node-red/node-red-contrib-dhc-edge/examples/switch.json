@@ -1,0 +1,116 @@
+[
+  {
+    "id": "c1",
+    "type": "comment",
+    "name": "Wall switch (profile: switch)",
+    "info": "Start the edge with ./start.sh --profile switch. A tap asks; this flow\ndecides and sets the state, which the phone shows. Replace 'the home' by your lights (MQTT, Zigbee, KNX...) and\nthe inject by a real thermometer.",
+    "x": 160,
+    "y": 40,
+    "wires": []
+  },
+  {
+    "id": "in1",
+    "type": "dhc-edge-in",
+    "name": "taps",
+    "edge": "edgecfg",
+    "events": "tile",
+    "tiles": "",
+    "photos": "drop",
+    "x": 120,
+    "y": 120,
+    "wires": [
+      [
+        "f1"
+      ]
+    ]
+  },
+  {
+    "id": "f1",
+    "type": "function",
+    "name": "the home",
+    "func": "// the lights follow the tap; a scene is kept; 'all off' turns everything off\nconst home = flow.get('home') || { ceiling: false, lamp: false, scene: 'day' };\nconst d = msg.data || {};\nlet toast = null;\nif (msg.tile === 'ceiling' || msg.tile === 'lamp') home[msg.tile] = !!msg.value;\nelse if (msg.tile === 'scene') { home.scene = d.scene; if (d.scene === 'movie' || d.scene === 'night') { home.ceiling = false; home.lamp = d.scene === 'movie'; } }\nelse if (msg.tile === 'blinds') toast = { en: 'Blinds: ' + d.blinds, fr: 'Volets : ' + d.blinds, de: 'Rollläden: ' + d.blinds };\nelse if (msg.tile === 'all_off') { home.ceiling = false; home.lamp = false; home.scene = 'night'; toast = { en: 'Good night', fr: 'Bonne nuit', de: 'Gute Nacht' }; }\nflow.set('home', home);\nreturn [{ payload: { ceiling: home.ceiling, lamp: home.lamp, scene: home.scene } }, toast ? { payload: toast } : null];",
+    "outputs": 2,
+    "noerr": 0,
+    "x": 320,
+    "y": 120,
+    "wires": [
+      [
+        "out1"
+      ],
+      [
+        "out2"
+      ]
+    ]
+  },
+  {
+    "id": "out1",
+    "type": "dhc-edge-out",
+    "name": "states",
+    "edge": "edgecfg",
+    "command": "state",
+    "tile": "",
+    "x": 540,
+    "y": 100,
+    "wires": []
+  },
+  {
+    "id": "out2",
+    "type": "dhc-edge-out",
+    "name": "",
+    "edge": "edgecfg",
+    "command": "toast",
+    "tile": "",
+    "x": 540,
+    "y": 140,
+    "wires": []
+  },
+  {
+    "id": "inj1",
+    "type": "inject",
+    "name": "every 30 s",
+    "props": [],
+    "repeat": "30",
+    "once": true,
+    "onceDelay": "2",
+    "x": 140,
+    "y": 220,
+    "wires": [
+      [
+        "f2"
+      ]
+    ]
+  },
+  {
+    "id": "f2",
+    "type": "function",
+    "name": "thermometer (simulated)",
+    "func": "return { payload: Math.round((20 + Math.random() * 2) * 10) / 10, tile: 'temp' };",
+    "outputs": 1,
+    "noerr": 0,
+    "x": 340,
+    "y": 220,
+    "wires": [
+      [
+        "out3"
+      ]
+    ]
+  },
+  {
+    "id": "out3",
+    "type": "dhc-edge-out",
+    "name": "temperature",
+    "edge": "edgecfg",
+    "command": "state",
+    "tile": "temp",
+    "x": 560,
+    "y": 220,
+    "wires": []
+  },
+  {
+    "id": "edgecfg",
+    "type": "dhc-edge-config",
+    "name": "phone edge",
+    "url": "ws://127.0.0.1:8790/ws/backend",
+    "insecure": false
+  }
+]

@@ -1,0 +1,26 @@
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+<!-- Copyright (C) 2026 DigitalHome.cloud -->
+<script type="text/javascript">
+  RED.nodes.registerType('dhc-edge-config', {
+    category: 'config',
+    defaults: { name: { value: '' }, url: { value: 'ws://127.0.0.1:8790/ws/backend', required: true }, insecure: { value: false } },
+    credentials: { token: { type: 'password' } },
+    label: function () { return this.name || this.url; }
+  });
+</script>
+<script type="text/html" data-template-name="dhc-edge-config">
+  <div class="form-row"><label for="node-config-input-name"><i class="fa fa-tag"></i> Name</label><input type="text" id="node-config-input-name" placeholder="hall phone"></div>
+  <div class="form-row"><label for="node-config-input-url"><i class="fa fa-globe"></i> Address</label><input type="text" id="node-config-input-url" placeholder="ws://192.168.1.23:8790/ws/backend"></div>
+  <div class="form-row"><label for="node-config-input-token"><i class="fa fa-key"></i> Token</label><input type="password" id="node-config-input-token"></div>
+  <div class="form-row"><label for="node-config-input-insecure">&nbsp;</label><input type="checkbox" id="node-config-input-insecure" style="width:auto"> wss: accept the edge's own certificate</div>
+</script>
+<script type="text/html" data-help-name="dhc-edge-config">
+  <p>One DigitalHome phone edge (contract <code>dhc-edge/0.1</code>).</p>
+  <h3>Properties</h3>
+  <dl class="message-properties">
+    <dt>Address</dt><dd>the edge's backend WebSocket, as its setup page shows it: <code>ws://&lt;edge&gt;:8790/ws/backend</code>
+      (<code>wss://</code> when the edge runs with a certificate).</dd>
+    <dt>Token</dt><dd>the edge's backend token: <code>.edge/token</code> in the edge's folder (<code>./start.sh</code> prints it).</dd>
+  </dl>
+  <p>The link reconnects by itself. Its first message is the edge's <code>status</code> event.</p>
+</script>

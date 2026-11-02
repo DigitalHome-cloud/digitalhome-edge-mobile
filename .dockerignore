@@ -1,0 +1,8 @@
+.git
+.venv
+.edge
+certs
+reports
+node-red
+tests
+**/__pycache__

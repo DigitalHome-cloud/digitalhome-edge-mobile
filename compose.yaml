@@ -1,0 +1,25 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 DigitalHome.cloud
+# The edge as a service that comes back after a reboot (a Pi, a home server). ./start.sh is the same for trying it.
+#
+#   ./start.sh token                                   # makes .edge/token once
+#   DHC_PROFILE=switch docker compose up -d            # the edge
+#   DHC_ADAPTERS=nodered,mqtt docker compose --profile broker up -d     # with a Mosquitto on this machine
+services:
+  edge:
+    build: {context: ., dockerfile: docker/Dockerfile}
+    image: dhc-edge:latest
+    network_mode: host
+    restart: unless-stopped
+    command: ["--profile", "${DHC_PROFILE:-inventory}", "--adapter", "${DHC_ADAPTERS:-nodered}", "--port", "${DHC_PORT:-8790}",
+              "--edge-id", "${DHC_EDGE_ID:-edge}", "--mqtt", "${DHC_MQTT:-127.0.0.1:1883}", "--token-file", "/edge/token"]
+    volumes:
+      - ./.edge/token:/edge/token:ro
+      - ./profiles:/app/profiles:ro
+  mosquitto:
+    image: eclipse-mosquitto:2.0.20
+    profiles: ["broker"]
+    network_mode: host
+    restart: unless-stopped
+    volumes:
+      - ./docker/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro

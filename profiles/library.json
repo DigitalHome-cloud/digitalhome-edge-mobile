@@ -1,0 +1,26 @@
+{
+  "_": "SPDX-License-Identifier: GPL-3.0-or-later. Copyright (C) 2026 DigitalHome.cloud. The home library: books in by ISBN and shelf, out to someone.",
+  "id": "library",
+  "extends": "checkinout",
+  "title": {"en": "Library", "fr": "Bibliothèque", "de": "Bibliothek"},
+  "tiles": [
+    {"id": "checkin", "icon": "📚", "label": {"en": "Shelve a book", "fr": "Ranger un livre", "de": "Buch einstellen"},
+     "data": {"direction": "in", "store": "library"},
+     "steps": [
+       {"id": "code", "action": "scan", "formats": ["ean_13", "qr_code"], "label": "ISBN",
+        "prompt": {"en": "Scan the ISBN on the back", "fr": "Scannez l’ISBN au dos", "de": "ISBN auf der Rückseite scannen"}},
+       {"id": "place", "action": "choice", "label": {"en": "Shelf", "fr": "Étagère", "de": "Regal"},
+        "options": [{"id": "living", "label": {"en": "Living room", "fr": "Salon", "de": "Wohnzimmer"}},
+                    {"id": "office", "label": {"en": "Office", "fr": "Bureau", "de": "Büro"}},
+                    {"id": "kids", "label": {"en": "Children's room", "fr": "Chambre des enfants", "de": "Kinderzimmer"}}]}
+     ]},
+    {"id": "checkout", "icon": "🤝", "label": {"en": "Lend a book", "fr": "Prêter un livre", "de": "Buch verleihen"},
+     "data": {"direction": "out", "store": "library"},
+     "steps": [
+       {"id": "code", "action": "scan", "formats": ["ean_13", "qr_code"], "label": "ISBN",
+        "prompt": {"en": "Scan the ISBN on the back", "fr": "Scannez l’ISBN au dos", "de": "ISBN auf der Rückseite scannen"}},
+       {"id": "who", "action": "text", "max": 60, "label": {"en": "To whom", "fr": "À qui", "de": "An wen"}}
+     ]},
+    {"id": "stock", "icon": "📖", "label": {"en": "Books", "fr": "Livres", "de": "Bücher"}}
+  ]
+}
